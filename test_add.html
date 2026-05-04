@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>家系圖新增測試</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: inline-block; width: 60px; }
+        input, select { padding: 5px; width: 150px; }
+        button { padding: 8px 15px; cursor: pointer; }
+        #result { margin-top: 20px; padding: 10px; border: 1px solid #ccc; display: none; }
+    </style>
+</head>
+<body>
+
+    <h2>新增親屬測試表單</h2>
+
+    <div class="form-group">
+        <label for="name">姓名：</label>
+        <input type="text" id="name" placeholder="例如：叔叔">
+    </div>
+
+    <div class="form-group">
+        <label for="gender">性別：</label>
+        <select id="gender">
+            <option value="男">男</option>
+            <option value="女">女</option>
+            <option value="未知">未知</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="birthYear">出生年：</label>
+        <input type="number" id="birthYear" placeholder="例如：1980">
+    </div>
+
+    <button onclick="submitData()">送出新增</button>
+
+    <div id="result"></div>
+
+    <script>
+        // 這就是負責把資料打包並送給 PHP 的 JavaScript 函數
+        async function submitData() {
+            // 1. 取得使用者在畫面上輸入的值
+            const name = document.getElementById('name').value;
+            const gender = document.getElementById('gender').value;
+            const birthYear = document.getElementById('birthYear').value;
+
+            // 簡單檢查是否有填寫姓名
+            if (!name) {
+                alert('請至少填寫姓名！');
+                return;
+            }
+
+            // 2. 打包成準備要送出的 JavaScript 物件
+            const dataToPHP = {
+                name: name,
+                gender: gender,
+                birthYear: birthYear
+            };
+
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '送出中，請稍候...';
+
+            try {
+                // 3. 使用 fetch API 發送 POST 請求給剛剛寫的 PHP 檔案
+                const response = await fetch('addRelative.php', {
+                    method: 'POST',
+                    headers: {
+                        // 告訴 PHP 我們傳過去的是 JSON 格式
+                        'Content-Type': 'application/json' 
+                    },
+                    // 將 JavaScript 物件轉換成 JSON 字串
+                    body: JSON.stringify(dataToPHP) 
+                });
+
+                // 4. 等待並解析 PHP 回傳的 JSON 結果
+                const result = await response.json();
+
+                // 5. 將結果顯示在畫面上
+                if (result.status === 'success') {
+                    resultDiv.style.color = 'green';
+                    resultDiv.innerHTML = `✅ 成功：${result.message}`;
+                } else {
+                    resultDiv.style.color = 'red';
+                    resultDiv.innerHTML = `❌ 失敗：${result.message}`;
+                }
+
+            } catch (error) {
+                resultDiv.style.color = 'red';
+                resultDiv.innerHTML = `連線發生錯誤：${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
