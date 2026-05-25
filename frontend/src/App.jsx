@@ -371,6 +371,38 @@ function App() {
     } catch (error) { console.error('刪除失敗', error); }
   };
 
+  const deletePersonByNode = async (personName) => {
+  if (!personName) return;
+
+  if (!window.confirm(`確定要刪除「${personName}」嗎？這會同時刪除他所有的關係連線喔！`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch('http://localhost/family_tree/deleteRelative.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: currentUser,
+        name: personName
+      })
+    });
+
+    const result = await res.json();
+
+    if (result.status === 'success') {
+      alert('✅ ' + result.message);
+      setDeleteName('');
+      fetchData(currentUser);
+    } else {
+      alert('❌ 刪除失敗: ' + result.message);
+    }
+  } catch (error) {
+    console.error('刪除失敗', error);
+    alert('系統發生錯誤，請確認 XAMPP / Apache 有啟動。');
+  }
+};
+
   const handleEditSelection = (e) => {
     const selectedId = e.target.value;
     setEditId(selectedId);
@@ -647,6 +679,44 @@ function App() {
             group.append("circle").attr("class", `person-shape ${shapeClass}`).attr("r", 32); 
         }
     });
+    ////////////////////////////////////////////////////////////////////////////
+    const deleteButton = node
+  .append("g")
+  .attr("class", "delete-node-button")
+  .attr("transform", "translate(28, -28)")
+  .style("cursor", "pointer")
+  .on("click", (event, d) => {
+    event.stopPropagation();
+
+    if (event.defaultPrevented) return;
+
+    deletePersonByNode(d.name);
+  })
+  .on("mouseover", function(event) {
+    event.stopPropagation();
+    d3.select(this).select("circle").attr("fill", "#c92a2a");
+  })
+  .on("mouseout", function() {
+    d3.select(this).select("circle").attr("fill", "#fa5252");
+  });
+
+deleteButton
+  .append("circle")
+  .attr("r", 11)
+  .attr("fill", "#fa5252")
+  .attr("stroke", "#ffffff")
+  .attr("stroke-width", 2);
+
+deleteButton
+  .append("text")
+  .text("×")
+  .attr("text-anchor", "middle")
+  .attr("dy", "0.34em")
+  .attr("fill", "#ffffff")
+  .attr("font-size", 17)
+  .attr("font-weight", 900)
+  .style("pointer-events", "none");
+  ///////////////////////////////////////////////////////////////////////
 
     node.append("text").text(d => d.name).attr('text-anchor', 'middle').attr('dy', '.32em').attr('class', 'node-label');
 
