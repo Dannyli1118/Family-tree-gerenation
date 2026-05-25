@@ -26,6 +26,7 @@ function App() {
   const [income, setIncome] = useState('');
   const [hasIllness, setHasIllness] = useState('無'); 
   const [isAlive, setIsAlive] = useState('是');       
+  const [photo, setPhoto] = useState('');
   const [isAdding, setIsAdding] = useState(false); 
 
   const [person1, setPerson1] = useState('');
@@ -42,6 +43,7 @@ function App() {
   const [editIncome, setEditIncome] = useState('');
   const [editHasIllness, setEditHasIllness] = useState('無');
   const [editIsAlive, setEditIsAlive] = useState('是');
+  const [editPhoto, setEditPhoto] = useState('');
   const [isEditing, setIsEditing] = useState(false);
 
   const svgRef = useRef();
@@ -295,6 +297,17 @@ function App() {
     } catch (error) { console.error('抓取資料失敗', error); }
   };
 
+  const handlePhotoChange = (e, setter) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setter(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleAddPerson = async (e) => {
     e.preventDefault();
     setIsAdding(true); 
@@ -302,13 +315,23 @@ function App() {
       const res = await fetch('http://localhost/family_tree/addRelative.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: currentUser, name, gender, birthday, location, income, hasIllness, isAlive })
+        body: JSON.stringify({
+          username: currentUser,
+          name,
+          gender,
+          birthday,
+          location,
+          income,
+          hasIllness,
+          isAlive,
+          photo
+        })
       });
       const result = await res.json();
       if (result.status === 'success') {
         alert('🎉 ' + result.message);
         setName(''); setGender('男'); setBirthday(''); setLocation('');
-        setIncome(''); setHasIllness('無'); setIsAlive('是');
+        setIncome(''); setHasIllness('無'); setIsAlive('是'); setPhoto('');
         fetchData(currentUser); 
       } else { alert('❌ 發生錯誤: ' + result.message); }
     } catch (error) { alert('系統發生錯誤！'); } finally { setIsAdding(false); }
@@ -352,8 +375,15 @@ function App() {
     const selectedId = e.target.value;
     setEditId(selectedId);
     if (!selectedId) {
-        setEditName(''); setEditGender('男'); setEditBirthday(''); setEditLocation('');
-        setEditIncome(''); setEditHasIllness('無'); setEditIsAlive('是'); return;
+      setEditName('');
+      setEditGender('男');
+      setEditBirthday('');
+      setEditLocation('');
+      setEditIncome('');
+      setEditHasIllness('無');
+      setEditIsAlive('是');
+      setEditPhoto('');
+      return;
     }
     const targetNode = familyData.nodes.find(n => String(n.id) === String(selectedId));
     if (targetNode) {
@@ -362,6 +392,7 @@ function App() {
         setEditLocation(targetNode.location === '未知' ? '' : targetNode.location || '');
         setEditIncome(targetNode.income === '未知' ? '' : targetNode.income || '');
         setEditHasIllness(targetNode.hasIllness || '無'); setEditIsAlive(targetNode.isAlive || '是');
+        setEditPhoto(targetNode.photo || '');
     }
   };
 
@@ -373,13 +404,24 @@ function App() {
       const res = await fetch('http://localhost/family_tree/editRelative.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: currentUser, id: editId, name: editName, gender: editGender, birthday: editBirthday, location: editLocation, income: editIncome, hasIllness: editHasIllness, isAlive: editIsAlive })
+        body: JSON.stringify({
+          username: currentUser,
+          id: editId,
+          name: editName,
+          gender: editGender,
+          birthday: editBirthday,
+          location: editLocation,
+          income: editIncome,
+          hasIllness: editHasIllness,
+          isAlive: editIsAlive,
+          photo: editPhoto
+        })
       });
       const result = await res.json();
       if (result.status === 'success') {
         alert('✨ ' + result.message);
         setEditId(''); setEditName(''); setEditGender('男'); setEditBirthday(''); 
-        setEditLocation(''); setEditIncome(''); setEditHasIllness('無'); setEditIsAlive('是');
+        setEditLocation(''); setEditIncome(''); setEditHasIllness('無'); setEditIsAlive('是'); setEditPhoto('');
         fetchData(currentUser); 
       } else { alert('❌ 修改失敗: ' + result.message); }
     } catch (error) { alert('系統發生錯誤！'); } finally { setIsEditing(false); }
@@ -517,13 +559,35 @@ function App() {
       .attr("class", "graph-node").call(drag)
       .on("mouseover", (event, d) => {
         tooltip.html(`
-          <div class="tooltip-title">👤 ${d.name}</div>
-          <div><strong>性別：</strong>${d.gender || '未知'}</div>
-          <div><strong>生日：</strong>${d.birthday || '未知'}</div>
-          <div><strong>地點：</strong>${d.location || '未知'}</div>
-          <div><strong>收入：</strong>${d.income ? `$${d.income}` : '未知'}</div>
-          <div><strong>身心疾病：</strong>${d.hasIllness || '無'}</div>
-          <div><strong>狀態：</strong>${d.isAlive || '是'}</div>
+          <div style="
+            display:flex;
+            gap:24px;
+            align-items:flex-start;
+            min-width:520px;
+          ">
+            <div>
+              <div class="tooltip-title">👤 ${d.name}</div>
+              <div><strong>性別：</strong>${d.gender || '未知'}</div>
+              <div><strong>生日：</strong>${d.birthday || '未知'}</div>
+              <div><strong>地點：</strong>${d.location || '未知'}</div>
+              <div><strong>收入：</strong>${d.income ? `$${d.income}` : '未知'}</div>
+              <div><strong>身心疾病：</strong>${d.hasIllness || '無'}</div>
+              <div><strong>狀態：</strong>${d.isAlive || '是'}</div>
+            </div>
+
+            ${
+              d.photo
+                ? `<img src="${d.photo}" style="
+                  width:160px;
+                  height:160px;
+                  object-fit:cover;
+                  border-radius:18px;
+                  border:3px solid #e9ecef;
+                  box-shadow:0 4px 12px rgba(0,0,0,0.15);
+                " />`
+                : `<div style="width:90px;height:90px;border-radius:14px;background:#f1f3f5;display:flex;align-items:center;justify-content:center;color:#868e96;font-size:12px;">無照片</div>`
+            }
+          </div>
         `);
         tooltip.style("visibility", "visible");
       })
@@ -653,6 +717,14 @@ function App() {
             <label>年收入<input type="number" placeholder="例如：800000" value={income} onChange={(e) => setIncome(e.target.value)} /></label>
             <label>身心疾病<select value={hasIllness} onChange={(e) => setHasIllness(e.target.value)}><option value="無">無</option><option value="有">有</option></select></label>
             <label>是否在世<select value={isAlive} onChange={(e) => setIsAlive(e.target.value)}><option value="是">是</option><option value="否">已故</option></select></label>
+            <label>
+              大頭貼
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handlePhotoChange(e, setPhoto)}
+              />
+            </label>
             <button className="submit-button green" type="submit" disabled={isAdding}>{isAdding ? '建立中...' : '建立人物'}</button>
           </form>
         </article>
@@ -686,6 +758,14 @@ function App() {
                 <label>年收入<input type="number" value={editIncome} onChange={(e) => setEditIncome(e.target.value)} /></label>
                 <label>身心疾病<select value={editHasIllness} onChange={(e) => setEditHasIllness(e.target.value)}><option value="無">無</option><option value="有">有</option></select></label>
                 <label>是否在世<select value={editIsAlive} onChange={(e) => setEditIsAlive(e.target.value)}><option value="是">是</option><option value="否">已故</option></select></label>
+                <label>
+                  大頭貼
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handlePhotoChange(e, setEditPhoto)}
+                  />
+                </label>
                 <button className="submit-button yellow" type="submit" disabled={isEditing}>{isEditing ? '更新中...' : '儲存修改'}</button>
               </>
             )}
