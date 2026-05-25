@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import * as d3 from 'd3';
+import jsPDF from 'jspdf';
 import './App.css';
 
 function App() {
@@ -44,6 +45,192 @@ function App() {
   const [isEditing, setIsEditing] = useState(false);
 
   const svgRef = useRef();
+  const getSvgDataUrl = () => {
+    const svgElement = svgRef.current;
+    if (!svgElement) return null;
+
+    const clonedSvg = svgElement.cloneNode(true);
+
+    const style = document.createElement('style');
+    style.textContent = `
+      .graph-link {
+        fill: none;
+        stroke-width: 2.5;
+        opacity: 0.9;
+      }
+
+      .graph-link.parent {
+        stroke: #74c0fc;
+      }
+
+      .graph-link.married {
+        stroke: #ff922b;
+        stroke-dasharray: 8 6;
+      }
+
+      .person-shape.male {
+        fill: #74c0fc;
+        stroke: #ffffff;
+        stroke-width: 3;
+        filter: url(#nodeShadow);
+      }
+
+      .person-shape.female {
+        fill: #ffc9c9;
+        stroke: #ffffff;
+        stroke-width: 3;
+        filter: url(#nodeShadow);
+      }
+
+      .person-shape.unknown {
+        fill: #e9ecef;
+        stroke: #ffffff;
+        stroke-width: 3;
+        filter: url(#nodeShadow);
+      }
+
+      .node-label {
+        fill: #343a40;
+        font-size: 15px;
+        font-weight: 700;
+        font-family: Arial, sans-serif;
+        pointer-events: none;
+      }
+    `;
+
+    clonedSvg.insertBefore(style, clonedSvg.firstChild);
+    clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
+    const serializer = new XMLSerializer();
+    const svgString = serializer.serializeToString(clonedSvg);
+
+    const svgBlob = new Blob([svgString], {
+      type: 'image/svg+xml;charset=utf-8'
+    });
+
+    return URL.createObjectURL(svgBlob);
+  };
+  const exportAsPNG = () => {
+    const svgElement = svgRef.current;
+
+    if (!svgElement || totalMembers === 0) {
+      alert('目前沒有家族樹可以匯出！');
+      return;
+    }
+
+    const url = getSvgDataUrl();
+    if (!url) return;
+
+    const img = new Image();
+
+    img.onload = () => {
+      const width = svgElement.viewBox.baseVal.width || 980;
+      const height = svgElement.viewBox.baseVal.height || 580;
+
+      const scale = 2;
+      const canvas = document.createElement('canvas');
+      canvas.width = width * scale;
+      canvas.height = height * scale;
+
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      URL.revokeObjectURL(url);
+
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = `${currentUser}_family_tree.png`;
+      link.click();
+    };
+
+    img.src = url;
+  };
+
+  const exportAsPDF = () => {
+    const svgElement = svgRef.current;
+
+    if (!svgElement || totalMembers === 0) {
+      alert('目前沒有家族樹可以匯出！');
+      return;
+    }
+
+    const url = getSvgDataUrl();
+    if (!url) return;
+
+    const img = new Image();
+
+    img.onload = () => {
+      const width = svgElement.viewBox.baseVal.width || 980;
+      const height = svgElement.viewBox.baseVal.height || 580;
+
+      const scale = 2;
+      const canvas = document.createElement('canvas');
+      canvas.width = width * scale;
+      canvas.height = height * scale;
+
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      URL.revokeObjectURL(url);
+
+      const imgData = canvas.toDataURL('image/png');
+
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'px',
+        format: [width, height]
+      });
+
+      pdf.addImage(imgData, 'PNG', 0, 0, width, height);
+      pdf.save(`${currentUser}_family_tree.pdf`);
+    };
+
+    img.src = url;
+  };
+
+  const exportMembersTable = () => {
+    if (!familyData.nodes || familyData.nodes.length === 0) {
+      alert('目前沒有成員資料可以匯出！');
+      return;
+    }
+
+    const headers = ['姓名', '性別', '生日', '出生年份', '地點', '年收入', '身心疾病', '是否在世'];
+
+    const rows = familyData.nodes.map(member => [
+      member.name ?? '',
+      member.gender ?? '',
+      member.birthday ?? '',
+      member.birthYear ?? '',
+      member.location ?? '',
+      member.income ?? '',
+      member.hasIllness ?? '',
+      member.isAlive ?? ''
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row =>
+        row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(',')
+      )
+    ].join('\n');
+
+    const blob = new Blob(['\uFEFF' + csvContent], {
+      type: 'text/csv;charset=utf-8;'
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${currentUser}_family_members.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   // 取得數據用於畫面顯示
   const totalMembers = familyData.nodes?.length || 0;
@@ -521,6 +708,21 @@ function App() {
       <section id="family-map" className="graph-section">
         <div className="section-heading">
           <div><p className="card-kicker">Visualization</p><h2>家族關係圖</h2></div>
+
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <button className="submit-button green" type="button" onClick={exportAsPNG}>
+              匯出 PNG
+            </button>
+
+            <button className="submit-button green" type="button" onClick={exportAsPDF}>
+              匯出 PDF
+            </button>
+
+            <button className="submit-button green" type="button" onClick={exportMembersTable}>
+              匯出成員表格
+            </button>
+          </div>
+
           <div className="legend">
             <span><i className="legend-square" /> 男性</span>
             <span><i className="legend-circle" /> 女性</span>
