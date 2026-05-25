@@ -27,6 +27,8 @@ function App() {
   const [hasIllness, setHasIllness] = useState('無'); 
   const [isAlive, setIsAlive] = useState('是');       
   const [photo, setPhoto] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [isAdding, setIsAdding] = useState(false); 
 
   const [person1, setPerson1] = useState('');
@@ -44,6 +46,8 @@ function App() {
   const [editHasIllness, setEditHasIllness] = useState('無');
   const [editIsAlive, setEditIsAlive] = useState('是');
   const [editPhoto, setEditPhoto] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editEmail, setEditEmail] = useState('');
   const [isEditing, setIsEditing] = useState(false);
 
   const svgRef = useRef();
@@ -324,14 +328,16 @@ function App() {
           income,
           hasIllness,
           isAlive,
-          photo
+          photo,
+          phone,
+          email
         })
       });
       const result = await res.json();
       if (result.status === 'success') {
         alert('🎉 ' + result.message);
         setName(''); setGender('男'); setBirthday(''); setLocation('');
-        setIncome(''); setHasIllness('無'); setIsAlive('是'); setPhoto('');
+        setIncome(''); setHasIllness('無'); setIsAlive('是'); setPhoto('');setPhone(''); setEmail('');
         fetchData(currentUser); 
       } else { alert('❌ 發生錯誤: ' + result.message); }
     } catch (error) { alert('系統發生錯誤！'); } finally { setIsAdding(false); }
@@ -370,7 +376,6 @@ function App() {
       } else { alert('❌ 刪除失敗: ' + result.message); }
     } catch (error) { console.error('刪除失敗', error); }
   };
-
   const deletePersonByNode = async (personName) => {
   if (!personName) return;
 
@@ -415,6 +420,8 @@ function App() {
       setEditHasIllness('無');
       setEditIsAlive('是');
       setEditPhoto('');
+      setEditPhone('');
+      setEditEmail('');
       return;
     }
     const targetNode = familyData.nodes.find(n => String(n.id) === String(selectedId));
@@ -425,6 +432,8 @@ function App() {
         setEditIncome(targetNode.income === '未知' ? '' : targetNode.income || '');
         setEditHasIllness(targetNode.hasIllness || '無'); setEditIsAlive(targetNode.isAlive || '是');
         setEditPhoto(targetNode.photo || '');
+        setEditPhone(targetNode.phone === '未知' ? '' : targetNode.phone || '');
+        setEditEmail(targetNode.email === '未知' ? '' : targetNode.email || '');
     }
   };
 
@@ -446,7 +455,9 @@ function App() {
           income: editIncome,
           hasIllness: editHasIllness,
           isAlive: editIsAlive,
-          photo: editPhoto
+          photo: editPhoto,
+          phone: editPhone,
+          email: editEmail
         })
       });
       const result = await res.json();
@@ -616,10 +627,12 @@ function App() {
               <div class="tooltip-title">👤 ${d.name}</div>
               <div><strong>性別：</strong>${d.gender || '未知'}</div>
               <div><strong>生日：</strong>${d.birthday || '未知'}</div>
+              <div><strong>電話：</strong>${d.phone || '未知'}</div>
+              <div><strong>信箱：</strong>${d.email || '未知'}</div>
               <div><strong>地點：</strong>${d.location || '未知'}</div>
               <div><strong>收入：</strong>${d.income ? `$${Number(d.income).toLocaleString()}` : '未知'}</div>
               <div><strong>身心疾病：</strong>${d.hasIllness || '無'}</div>
-              <div><strong>是否在世：</strong>${d.isAlive || '是'}</div>
+              <div><strong>狀態：</strong>${d.isAlive || '是'}</div>
             </div>
 
             ${
@@ -681,43 +694,42 @@ function App() {
     });
     ////////////////////////////////////////////////////////////////////////////
     const deleteButton = node
-  .append("g")
-  .attr("class", "delete-node-button")
-  .attr("transform", "translate(28, -28)")
-  .style("cursor", "pointer")
-  .on("click", (event, d) => {
-    event.stopPropagation();
+      .append("g")
+      .attr("class", "delete-node-button")
+      .attr("transform", "translate(28, -28)")
+      .style("cursor", "pointer")
+      .on("click", (event, d) => {
+        event.stopPropagation();
 
-    if (event.defaultPrevented) return;
+        if (event.defaultPrevented) return;
 
-    deletePersonByNode(d.name);
-  })
-  .on("mouseover", function(event) {
-    event.stopPropagation();
-    d3.select(this).select("circle").attr("fill", "#c92a2a");
-  })
-  .on("mouseout", function() {
-    d3.select(this).select("circle").attr("fill", "#fa5252");
-  });
+        deletePersonByNode(d.name);
+      })
+      .on("mouseover", function(event) {
+        event.stopPropagation();
+        d3.select(this).select("circle").attr("fill", "#c92a2a");
+      })
+      .on("mouseout", function() {
+        d3.select(this).select("circle").attr("fill", "#fa5252");
+      });
 
-deleteButton
-  .append("circle")
-  .attr("r", 11)
-  .attr("fill", "#fa5252")
-  .attr("stroke", "#ffffff")
-  .attr("stroke-width", 2);
+    deleteButton
+      .append("circle")
+      .attr("r", 11)
+      .attr("fill", "#fa5252")
+      .attr("stroke", "#ffffff")
+      .attr("stroke-width", 2);
 
-deleteButton
-  .append("text")
-  .text("×")
-  .attr("text-anchor", "middle")
-  .attr("dy", "0.34em")
-  .attr("fill", "#ffffff")
-  .attr("font-size", 17)
-  .attr("font-weight", 900)
-  .style("pointer-events", "none");
+    deleteButton
+      .append("text")
+      .text("×")
+      .attr("text-anchor", "middle")
+      .attr("dy", "0.34em")
+      .attr("fill", "#ffffff")
+      .attr("font-size", 17)
+      .attr("font-weight", 900)
+      .style("pointer-events", "none");
   ///////////////////////////////////////////////////////////////////////
-
     node.append("text").text(d => d.name).attr('text-anchor', 'middle').attr('dy', '.32em').attr('class', 'node-label');
 
     simulation.on("tick", () => {
@@ -826,6 +838,8 @@ deleteButton
             <label>姓名<input value={name} onChange={(e) => setName(e.target.value)} required /></label>
             <label>性別<select value={gender} onChange={(e) => setGender(e.target.value)}><option value="男">男</option><option value="女">女</option><option value="未知">未知</option></select></label>
             <label>生日<input type="date" value={birthday} onChange={(e) => setBirthday(e.target.value)} /></label>
+            <label>電話<input type="tel" placeholder="例如：0912345678" value={phone} onChange={(e) => setPhone(e.target.value)} /></label>
+            <label>Email<input type="email" placeholder="例如：example@gmail.com" value={email} onChange={(e) => setEmail(e.target.value)} /></label>
             <label>地點<input placeholder="例如：台北市" value={location} onChange={(e) => setLocation(e.target.value)} /></label>
             <label>年收入<input type="number" placeholder="例如：800000" value={income} onChange={(e) => setIncome(e.target.value)} /></label>
             <label>身心疾病<select value={hasIllness} onChange={(e) => setHasIllness(e.target.value)}><option value="無">無</option><option value="有">有</option></select></label>
@@ -867,6 +881,8 @@ deleteButton
                 <label>姓名<input value={editName} onChange={(e) => setEditName(e.target.value)} required /></label>
                 <label>性別<select value={editGender} onChange={(e) => setEditGender(e.target.value)}><option value="男">男</option><option value="女">女</option><option value="未知">未知</option></select></label>
                 <label>生日<input type="date" value={editBirthday} onChange={(e) => setEditBirthday(e.target.value)} /></label>
+                <label>電話<input type="tel" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} /></label>
+                <label>Email<input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} /></label>
                 <label>地點<input value={editLocation} onChange={(e) => setEditLocation(e.target.value)} /></label>
                 <label>年收入<input type="number" value={editIncome} onChange={(e) => setEditIncome(e.target.value)} /></label>
                 <label>身心疾病<select value={editHasIllness} onChange={(e) => setEditHasIllness(e.target.value)}><option value="無">無</option><option value="有">有</option></select></label>
