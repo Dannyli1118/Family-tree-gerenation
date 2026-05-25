@@ -18,10 +18,15 @@ try {
     $jsonInput = file_get_contents('php://input');
     $data = json_decode($jsonInput, true);
 
-    if (empty($data['person1']) || empty($data['person2']) || empty($data['relation'])) {
-        throw new Exception("必須提供雙方姓名與關係！");
+    if (
+        empty($data['username']) ||
+        empty($data['person1']) ||
+        empty($data['person2']) ||
+        empty($data['relation'])
+    ) {
+        throw new Exception("必須提供 username、雙方姓名與關係！");
     }
-
+    $username = $data['username'];
     $person1 = $data['person1'];
     $person2 = $data['person2'];
     $relation = $data['relation'];
@@ -36,14 +41,24 @@ try {
 
     // 4. 【準備 Cypher 指令】先 MATCH 找到兩個人，再 CREATE 建立連線
     $cypher = "
-        MATCH (a:Person {name: \$person1})
-        MATCH (b:Person {name: \$person2})
+        MATCH (a:Person {
+            name: \$person1,
+            username: \$username
+        })
+
+        MATCH (b:Person {
+            name: \$person2,
+            username: \$username
+        })
+
         CREATE (a)-[r:$relation]->(b)
+
         RETURN type(r)
     ";
 
     // 5. 執行指令，並把結果存進 $result 變數中
     $result = $client->run($cypher, [
+        'username' => $username,
         'person1' => $person1,
         'person2' => $person2
     ]);
