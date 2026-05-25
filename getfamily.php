@@ -51,7 +51,10 @@ try {
             'income' => $props['income'] ?? '未知',
             'hasIllness' => $props['hasIllness'] ?? '無',
             'isAlive' => $props['isAlive'] ?? '是',
-            'photo' => $props['photo'] ?? ''
+            'photo' => $props['photo'] ?? '',
+            'phone' => $props['phone'] ?? '未知',
+            'email' => $props['email'] ?? '未知'
+            
         ];
     }
 

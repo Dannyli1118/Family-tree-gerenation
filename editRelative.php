@@ -48,7 +48,9 @@ try {
             p.income = \$income,
             p.hasIllness = \$hasIllness,
             p.isAlive = \$isAlive,
-            p.photo = \$photo
+            p.photo = \$photo,
+            p.phone = \$phone,    
+            p.email = \$email     
         RETURN id(p)
     ";
 
@@ -63,7 +65,9 @@ try {
         'income' => (isset($data['income']) && $data['income'] !== '') ? (int)$data['income'] : null,
         'hasIllness' => $data['hasIllness'] ?? '無',
         'isAlive' => $data['isAlive'] ?? '是',
-        'photo' => $data['photo'] ?? ''
+        'photo' => $data['photo'] ?? '',
+        'phone' => $data['phone'] ?? '',   
+        'email' => $data['email'] ?? ''    
     ]);
 
     if ($result->count() === 0) {

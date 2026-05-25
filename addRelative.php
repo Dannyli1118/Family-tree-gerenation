@@ -57,7 +57,9 @@ try {
         income: \$income,
         hasIllness: \$hasIllness,
         isAlive: \$isAlive,
-        photo: \$photo
+        photo: \$photo,
+        phone: \$phone,   
+        email: \$email
     })
     RETURN id(p)
     ";
@@ -73,7 +75,9 @@ try {
         'income' => (isset($data['income']) && $data['income'] !== '') ? (int)$data['income'] : null,
         'hasIllness' => $data['hasIllness'] ?? '無',
         'isAlive' => $data['isAlive'] ?? '是',
-        'photo' => $data['photo'] ?? ''
+        'photo' => $data['photo'] ?? '',
+        'phone' => $data['phone'] ?? '',  
+        'email' => $data['email'] ?? ''
     ]);
 
     // 5. 回傳成功訊息
