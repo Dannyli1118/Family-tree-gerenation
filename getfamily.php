@@ -16,11 +16,20 @@ try {
         ->build();
 
     // 1. 撈取所有的人物節點
-    $nodes = [];
+    $username = $_GET['username'] ?? '';
+
+    if ($username === '') {
+        throw new Exception('缺少 username');
+    }
     
     // 🌟 關鍵修改 1：在 Cypher 語句中，明確要求回傳 id(n) 並命名為 nodeId
-    $resultNodes = $client->run("MATCH (n:Person) RETURN id(n) AS nodeId, n");
-    
+    $resultNodes = $client->run(
+        "MATCH (n:Person)
+        WHERE n.username = \$username
+        RETURN id(n) AS nodeId, n",
+        ['username' => $username]
+    );    
+
     foreach ($resultNodes as $record) {
         $node = $record->get('n');
         $nodeId = $record->get('nodeId'); // 🌟 關鍵修改 2：直接拿算好的 ID，不再呼叫報錯的 $node->id()
@@ -44,7 +53,12 @@ try {
     }
 
     // 2. 撈取所有的親屬關係連線
-    $linkResult = $client->run('MATCH (a:Person)-[r]->(b:Person) RETURN id(a) AS source, id(b) AS target, type(r) AS type');
+    $linkResult = $client->run(
+        "MATCH (a:Person)-[r]->(b:Person)
+        WHERE a.username = \$username AND b.username = \$username
+        RETURN id(a) AS source, id(b) AS target, type(r) AS type",
+        ['username' => $username]
+    );
     $links = [];
     foreach ($linkResult as $record) {
         $links[] = [

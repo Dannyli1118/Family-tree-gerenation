@@ -34,6 +34,9 @@ try {
     if (empty($data['name'])) {
         throw new Exception("必須提供姓名！");
     }
+    if (empty($data['username'])) {
+    throw new Exception("缺少 username，無法判斷這個人物屬於哪個帳號！");
+}
 
     // 🌟 【關鍵魔法】：從 "YYYY-MM-DD" 的生日中，切出前 4 個字元作為 birthYear
     // 這樣 D3.js 的高度物理引擎就能繼續正常運作，完全不用改前端畫圖邏輯！
@@ -44,21 +47,23 @@ try {
 
     // 3. 準備 Cypher 指令 (把新欄位全部加進去)
     $cypher = "
-        CREATE (p:Person {
-            name: \$name, 
-            gender: \$gender, 
-            birthday: \$birthday,
-            birthYear: \$birthYear,
-            location: \$location,
-            income: \$income,
-            hasIllness: \$hasIllness,
-            isAlive: \$isAlive
-        }) 
-        RETURN id(p)
+    CREATE (p:Person {
+        username: \$username,
+        name: \$name,
+        gender: \$gender,
+        birthday: \$birthday,
+        birthYear: \$birthYear,
+        location: \$location,
+        income: \$income,
+        hasIllness: \$hasIllness,
+        isAlive: \$isAlive
+    })
+    RETURN id(p)
     ";
 
     // 4. 發送給 Neo4j 執行 (對應所有新欄位，並加上防呆處理)
     $client->run($cypher, [
+        'username' => $data['username'],
         'name' => trim($data['name']), 
         'gender' => $data['gender'] ?? '未知',
         'birthday' => $data['birthday'] ?? null,

@@ -26,6 +26,7 @@ try {
     $data = json_decode($jsonInput, true);
 
     // 🌟 防呆：確保有傳入目標的 ID 和必填的姓名
+    if (empty($data['username'])) throw new Exception("缺少 username！");
     if (!isset($data['id']) || $data['id'] === '') throw new Exception("必須指定要修改的節點！");
     if (empty($data['name'])) throw new Exception("姓名不能為空！");
 
@@ -36,7 +37,9 @@ try {
 
     // 🌟 關鍵 Cypher：利用 id(p) 精準尋找，並用 SET 更新所有屬性
     $cypher = "
-        MATCH (p:Person) WHERE id(p) = toInteger(\$id)
+        MATCH (p:Person)
+        WHERE id(p) = toInteger(\$id)
+        AND p.username = \$username
         SET p.name = \$name, 
             p.gender = \$gender, 
             p.birthday = \$birthday,
@@ -48,7 +51,8 @@ try {
         RETURN id(p)
     ";
 
-    $client->run($cypher, [
+    $result = $client->run($cypher, [
+        'username' => $data['username'],
         'id' => $data['id'],
         'name' => trim($data['name']), 
         'gender' => $data['gender'] ?? '未知',
@@ -59,6 +63,10 @@ try {
         'hasIllness' => $data['hasIllness'] ?? '無',
         'isAlive' => $data['isAlive'] ?? '是'
     ]);
+
+    if ($result->count() === 0) {
+        throw new Exception("找不到這個使用者底下的指定人物，無法修改！");
+    }
 
     echo json_encode([
         'status' => 'success',
