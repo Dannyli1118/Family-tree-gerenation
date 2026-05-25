@@ -577,21 +577,49 @@ function App() {
 
             ${
               d.photo
-                ? `<img src="${d.photo}" style="
-                  width:160px;
-                  height:160px;
-                  object-fit:cover;
-                  border-radius:18px;
-                  border:3px solid #e9ecef;
-                  box-shadow:0 4px 12px rgba(0,0,0,0.15);
-                " />`
+                ? `<div style="
+                    width:160px;
+                    height:160px;
+                    flex-shrink:0;
+                    overflow:hidden;
+                    border-radius:18px;
+                    border:3px solid #e9ecef;
+                    box-shadow:0 4px 12px rgba(0,0,0,0.15);
+                    background:#f8f9fa;
+                  ">
+                    <img src="${d.photo}" style="
+                      width:100%;
+                      height:100%;
+                      object-fit:cover;
+                      display:block;
+                    " />
+                  </div>`
                 : `<div style="width:90px;height:90px;border-radius:14px;background:#f1f3f5;display:flex;align-items:center;justify-content:center;color:#868e96;font-size:12px;">無照片</div>`
             }
           </div>
         `);
         tooltip.style("visibility", "visible");
       })
-      .on("mousemove", (event) => { tooltip.style("top", (event.pageY + 16) + "px").style("left", (event.pageX + 16) + "px"); })
+      .on("mousemove", (event) => {
+        const tooltipNode = tooltip.node();
+        const tooltipWidth = tooltipNode.offsetWidth;
+        const tooltipHeight = tooltipNode.offsetHeight;
+
+        let left = event.pageX + 16;
+        let top = event.pageY + 16;
+
+        if (left + tooltipWidth > window.innerWidth) {
+          left = event.pageX - tooltipWidth - 16;
+        }
+
+        if (top + tooltipHeight > window.innerHeight) {
+          top = event.pageY - tooltipHeight - 16;
+        }
+
+        tooltip
+          .style("left", `${left}px`)
+          .style("top", `${top}px`);
+      })
       .on("mouseout", () => { tooltip.style("visibility", "hidden"); });
       
     // 套用同學的美編節點形狀
