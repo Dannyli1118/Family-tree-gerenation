@@ -1,45 +1,71 @@
 <?php
-// 載入 Composer 安裝的套件
 require_once 'vendor/autoload.php';
+require_once 'db_config.php';
+// 如果你有設定 db_config.php，請解開下面這行的註解，並刪除下一行的寫死連線
+// require_once 'db_config.php'; 
+
 use Laudis\Neo4j\ClientBuilder;
 
-// 告訴瀏覽器這是一支回傳 JSON 格式的 API
 header('Content-Type: application/json; charset=utf-8');
-// 允許前端跨網域請求 (CORS) - 開發階段必備
-header('Access-Control-Allow-Origin: *'); 
+header('Access-Control-Allow-Origin: *');
 
 try {
-    // 1. 建立連線 (請將 '你的密碼' 換成你剛剛在 Neo4j Desktop 設定的密碼)
-    // Neo4j 預設使用 bolt 協定，port 為 7687
+    // 建立連線 (請確認密碼正確)
     $client = ClientBuilder::create()
-        ->withDriver('default', 'bolt://neo4j:12345678@localhost:7687')
+        ->withDriver('default', $db_uri) 
         ->build();
 
-    // 2. 撰寫 Cypher 查詢語法 (這裡先簡單抓取所有 Person 節點)
-    $cypher = "MATCH (p:Person) RETURN p.name AS name, p.birthYear AS birthYear";
+    // 1. 撈取所有的人物節點
+    $nodes = [];
     
-    // 3. 執行查詢
-    $results = $client->run($cypher);
+    // 🌟 關鍵修改 1：在 Cypher 語句中，明確要求回傳 id(n) 並命名為 nodeId
+    $resultNodes = $client->run("MATCH (n:Person) RETURN id(n) AS nodeId, n");
+    
+    foreach ($resultNodes as $record) {
+        $node = $record->get('n');
+        $nodeId = $record->get('nodeId'); // 🌟 關鍵修改 2：直接拿算好的 ID，不再呼叫報錯的 $node->id()
+        
+        // 將節點的所有屬性轉成 PHP 陣列
+        $props = $node->getProperties()->toArray(); 
 
-    // 4. 將結果整理成 PHP 陣列
-    $familyMembers = [];
-    foreach ($results as $record) {
-        $familyMembers[] = [
-            'name' => $record->get('name'),
-            'birthYear' => $record->get('birthYear')
+        $nodes[] = [
+            'id' => $nodeId, // 👈 完美解決致命錯誤！
+            
+            // 以下是完整詳盡的個人資料
+            'name' => $props['name'] ?? '未知',
+            'gender' => $props['gender'] ?? '未知',
+            'birthYear' => $props['birthYear'] ?? null,
+            'birthday' => $props['birthday'] ?? '未知',
+            'location' => $props['location'] ?? '未知',
+            'income' => $props['income'] ?? '未知',
+            'hasIllness' => $props['hasIllness'] ?? '無',
+            'isAlive' => $props['isAlive'] ?? '是'
         ];
     }
 
-    // 5. 將陣列轉換成 JSON 格式並印出
+    // 2. 撈取所有的親屬關係連線
+    $linkResult = $client->run('MATCH (a:Person)-[r]->(b:Person) RETURN id(a) AS source, id(b) AS target, type(r) AS type');
+    $links = [];
+    foreach ($linkResult as $record) {
+        $links[] = [
+            'source' => $record->get('source'),
+            'target' => $record->get('target'),
+            'type' => $record->get('type')
+        ];
+    }
+
+    // 3. 把點(nodes)和線(links)打包成一個大物件回傳給前端
     echo json_encode([
-        'status' => 'success', 
-        'data' => $familyMembers
+        'status' => 'success',
+        'data' => [
+            'nodes' => $nodes,
+            'links' => $links
+        ]
     ], JSON_UNESCAPED_UNICODE);
 
 } catch (Exception $e) {
-    // 如果連線或查詢失敗，印出錯誤訊息
     echo json_encode([
-        'status' => 'error', 
+        'status' => 'error',
         'message' => $e->getMessage()
     ]);
 }
