@@ -440,7 +440,12 @@ function App() {
     // 套用同學的 .d3-tooltip 樣式類別
     const tooltip = d3.select("body").append("div")
       .attr("class", "d3-tooltip")
-      .style("visibility", "hidden");
+      .style("visibility", "hidden")
+      .style("width", "560px")
+      .style("max-width", "560px")
+      .style("box-sizing", "border-box")
+      .style("white-space", "normal")
+      .style("overflow", "hidden");
       
     const width = 980; const height = 580;
     svg.attr('width', '100%').attr('height', height).attr('viewBox', [0, 0, width, height]);
@@ -561,16 +566,26 @@ function App() {
         tooltip.html(`
           <div style="
             display:flex;
-            gap:24px;
+            gap:20px;
             align-items:flex-start;
-            min-width:520px;
+            width:520px;
+            max-width:520px;
+            overflow:hidden;
           ">
-            <div>
+            <div style="
+              width:300px;
+              max-width:300px;
+              min-width:0;
+              overflow:hidden;
+              overflow-wrap:anywhere;
+              word-break:break-all;
+              line-height:1.6;
+            ">
               <div class="tooltip-title">👤 ${d.name}</div>
               <div><strong>性別：</strong>${d.gender || '未知'}</div>
               <div><strong>生日：</strong>${d.birthday || '未知'}</div>
               <div><strong>地點：</strong>${d.location || '未知'}</div>
-              <div><strong>收入：</strong>${d.income ? `$${d.income}` : '未知'}</div>
+              <div><strong>收入：</strong>${d.income ? `$${Number(d.income).toLocaleString()}` : '未知'}</div>
               <div><strong>身心疾病：</strong>${d.hasIllness || '無'}</div>
               <div><strong>狀態：</strong>${d.isAlive || '是'}</div>
             </div>
@@ -580,7 +595,7 @@ function App() {
                 ? `<div style="
                     width:160px;
                     height:160px;
-                    flex-shrink:0;
+                    flex:0 0 160px;
                     overflow:hidden;
                     border-radius:18px;
                     border:3px solid #e9ecef;
@@ -594,7 +609,7 @@ function App() {
                       display:block;
                     " />
                   </div>`
-                : `<div style="width:90px;height:90px;border-radius:14px;background:#f1f3f5;display:flex;align-items:center;justify-content:center;color:#868e96;font-size:12px;">無照片</div>`
+                : `<div style="width:160px;height:160px;flex:0 0 160px;border-radius:18px;background:#f1f3f5;display:flex;align-items:center;justify-content:center;color:#868e96;font-size:12px;">無照片</div>`
             }
           </div>
         `);
