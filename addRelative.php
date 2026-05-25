@@ -1,49 +1,75 @@
 <?php
 require_once 'vendor/autoload.php';
+require_once 'db_config.php'; 
+
 use Laudis\Neo4j\ClientBuilder;
 
-header('Content-Type: application/json; charset=utf-8');
+// 【防彈級 CORS 設定】
 header('Access-Control-Allow-Origin: *'); 
-// 允許前端發送 POST 請求
-header('Access-Control-Allow-Methods: POST'); 
-header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Methods: POST, OPTIONS'); 
+header('Access-Control-Allow-Headers: Content-Type, Authorization'); 
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
+header('Content-Type: application/json; charset=utf-8');
 
 try {
-    // 1. 建立連線 (記得換成你的密碼)
+    // 1. 建立連線
     $client = ClientBuilder::create()
-        ->withDriver('default', 'bolt://neo4j:12345678@localhost:7687')
+        ->withDriver('default', $db_uri)
         ->build();
 
-    // 2. 【接收前端資料】取得前端傳來的 JSON 字串
+    // 2. 接收前端資料
     $jsonInput = file_get_contents('php://input');
     
-    // 3. 【型態轉換】將 JSON 轉成 PHP 陣列
+    if (empty($jsonInput)) {
+        throw new Exception("沒有收到前端傳來的資料！");
+    }
+
     $data = json_decode($jsonInput, true);
 
-    // 確保前端有傳名字過來
-    if (!isset($data['name'])) {
+    if (empty($data['name'])) {
         throw new Exception("必須提供姓名！");
     }
 
-    // 4. 【準備 Cypher 指令】
-    // 注意：我們用 $name 和 $birthYear 作為「佔位符」，這叫參數化查詢，比較安全！
+    // 🌟 【關鍵魔法】：從 "YYYY-MM-DD" 的生日中，切出前 4 個字元作為 birthYear
+    // 這樣 D3.js 的高度物理引擎就能繼續正常運作，完全不用改前端畫圖邏輯！
+    $birthYear = null;
+    if (!empty($data['birthday'])) {
+        $birthYear = (int) substr($data['birthday'], 0, 4);
+    }
+
+    // 3. 準備 Cypher 指令 (把新欄位全部加進去)
     $cypher = "
         CREATE (p:Person {
             name: \$name, 
             gender: \$gender, 
-            birthYear: \$birthYear
+            birthday: \$birthday,
+            birthYear: \$birthYear,
+            location: \$location,
+            income: \$income,
+            hasIllness: \$hasIllness,
+            isAlive: \$isAlive
         }) 
-        RETURN p
+        RETURN id(p)
     ";
 
-    // 5. 【發送給 Neo4j】將資料陣列綁定到 Cypher 指令中執行
+    // 4. 發送給 Neo4j 執行 (對應所有新欄位，並加上防呆處理)
     $client->run($cypher, [
-        'name' => $data['name'],
-        'gender' => $data['gender'] ?? '未知', // 如果前端沒傳性別，預設為未知
-        'birthYear' => (int)$data['birthYear'] // 確保年份是整數型態
+        'name' => trim($data['name']), 
+        'gender' => $data['gender'] ?? '未知',
+        'birthday' => $data['birthday'] ?? null,
+        'birthYear' => $birthYear, // D3.js 需要的欄位
+        'location' => trim($data['location'] ?? ''),
+        'income' => (isset($data['income']) && $data['income'] !== '') ? (int)$data['income'] : null,
+        'hasIllness' => $data['hasIllness'] ?? '無',
+        'isAlive' => $data['isAlive'] ?? '是'
     ]);
 
-    // 6. 回傳成功訊息給前端
+    // 5. 回傳成功訊息
     echo json_encode([
         'status' => 'success',
         'message' => $data['name'] . ' 已成功加入家系圖！'
@@ -52,7 +78,7 @@ try {
 } catch (Exception $e) {
     echo json_encode([
         'status' => 'error', 
-        'message' => $e->getMessage()
-    ]);
+        'message' => "連線或寫入錯誤：" . $e->getMessage()
+    ], JSON_UNESCAPED_UNICODE);
 }
 ?>
