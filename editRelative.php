@@ -47,7 +47,8 @@ try {
             p.location = \$location,
             p.income = \$income,
             p.hasIllness = \$hasIllness,
-            p.isAlive = \$isAlive
+            p.isAlive = \$isAlive,
+            p.photo = \$photo
         RETURN id(p)
     ";
 
@@ -61,7 +62,8 @@ try {
         'location' => trim($data['location'] ?? ''),
         'income' => (isset($data['income']) && $data['income'] !== '') ? (int)$data['income'] : null,
         'hasIllness' => $data['hasIllness'] ?? '無',
-        'isAlive' => $data['isAlive'] ?? '是'
+        'isAlive' => $data['isAlive'] ?? '是',
+        'photo' => $data['photo'] ?? ''
     ]);
 
     if ($result->count() === 0) {

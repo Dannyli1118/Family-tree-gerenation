@@ -22,6 +22,8 @@ try {
         throw new Exception('缺少 username');
     }
     
+    $nodes = [];
+
     // 🌟 關鍵修改 1：在 Cypher 語句中，明確要求回傳 id(n) 並命名為 nodeId
     $resultNodes = $client->run(
         "MATCH (n:Person)
@@ -48,7 +50,8 @@ try {
             'location' => $props['location'] ?? '未知',
             'income' => $props['income'] ?? '未知',
             'hasIllness' => $props['hasIllness'] ?? '無',
-            'isAlive' => $props['isAlive'] ?? '是'
+            'isAlive' => $props['isAlive'] ?? '是',
+            'photo' => $props['photo'] ?? ''
         ];
     }
 
