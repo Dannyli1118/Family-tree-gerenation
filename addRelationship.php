@@ -1,5 +1,6 @@
 <?php
 require_once 'vendor/autoload.php';
+require_once 'db_config.php';
 use Laudis\Neo4j\ClientBuilder;
 
 header('Content-Type: application/json; charset=utf-8');
@@ -10,7 +11,7 @@ header('Access-Control-Allow-Headers: Content-Type');
 try {
     // 1. 建立連線 (記得替換密碼)
     $client = ClientBuilder::create()
-        ->withDriver('default', 'bolt://neo4j:12345678@localhost:7687')
+        ->withDriver('default', $db_uri) 
         ->build();
 
     // 2. 接收前端傳來的資料：人物 A、人物 B、以及他們的關係
