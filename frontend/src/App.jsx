@@ -619,7 +619,7 @@ function App() {
               <div><strong>地點：</strong>${d.location || '未知'}</div>
               <div><strong>收入：</strong>${d.income ? `$${Number(d.income).toLocaleString()}` : '未知'}</div>
               <div><strong>身心疾病：</strong>${d.hasIllness || '無'}</div>
-              <div><strong>狀態：</strong>${d.isAlive || '是'}</div>
+              <div><strong>是否在世：</strong>${d.isAlive || '是'}</div>
             </div>
 
             ${
