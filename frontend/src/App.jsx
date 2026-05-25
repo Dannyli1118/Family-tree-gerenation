@@ -70,7 +70,7 @@ function App() {
         if (authMode === 'login') {
             setIsLoggedIn(true);
             setCurrentUser(result.username);
-            fetchData(); // 登入成功才去抓家族樹資料
+            fetchData(result.username); // 登入成功才去抓家族樹資料
         } else {
             // 註冊成功，自動切換到登入畫面，並清空密碼
             setAuthMode('login'); 
@@ -99,12 +99,17 @@ function App() {
   // ==========================================
   // 🌳 家族樹系統 API 處理
   // ==========================================
-  const fetchData = async () => {
+  const fetchData = async (user = currentUser) => {
     try {
-      const res = await fetch('http://localhost/family_tree/getFamily.php', { cache: 'no-store' });
+      const res = await fetch(
+        `http://localhost/family_tree/getFamily.php?username=${encodeURIComponent(user)}`,
+        { cache: 'no-store' }
+      );
       const result = await res.json();
       if (result.status === 'success') setFamilyData(result.data);
-    } catch (error) { console.error('抓取資料失敗', error); }
+    } catch (error) {
+      console.error('抓取資料失敗', error);
+    }
   };
 
   const handleAddPerson = async (e) => {
@@ -114,14 +119,23 @@ function App() {
       const res = await fetch('http://localhost/family_tree/addRelative.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, gender, birthday, location, income, hasIllness, isAlive })
+        body: JSON.stringify({
+          username: currentUser,
+          name,
+          gender,
+          birthday,
+          location,
+          income,
+          hasIllness,
+          isAlive
+        })
       });
       const result = await res.json();
       if (result.status === 'success') {
         alert('🎉 ' + result.message);
         setName(''); setGender('男'); setBirthday(''); setLocation('');
         setIncome(''); setHasIllness('無'); setIsAlive('是');
-        fetchData(); 
+        fetchData(currentUser); 
       } else { alert('❌ 發生錯誤: ' + result.message); }
     } catch (error) { alert('系統發生錯誤！'); } finally { setIsAdding(false); }
   };
@@ -133,12 +147,17 @@ function App() {
       const res = await fetch('http://localhost/family_tree/addRelationship.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ person1, person2, relation })
+        body: JSON.stringify({
+          username: currentUser,
+          person1,
+          person2,
+          relation
+        })
       });
       const result = await res.json();
       if (result.status === 'success') {
         alert('🔗 ' + result.message);
-        setPerson1(''); setPerson2(''); fetchData(); 
+        setPerson1(''); setPerson2(''); fetchData(currentUser); 
       } else { alert('❌ 發生錯誤: ' + result.message); }
     } catch (error) { console.error('建立關係失敗', error); }
   };
@@ -150,12 +169,15 @@ function App() {
       const res = await fetch('http://localhost/family_tree/deleteRelative.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: deleteName })
+        body: JSON.stringify({
+          username: currentUser,
+          name: deleteName
+        })
       });
       const result = await res.json();
       if (result.status === 'success') {
         alert('🗑️ ' + result.message);
-        setDeleteName(''); fetchData(); 
+        setDeleteName(''); fetchData(currentUser); 
       } else { alert('❌ 刪除失敗: ' + result.message); }
     } catch (error) { console.error('刪除失敗', error); }
   };
@@ -185,14 +207,24 @@ function App() {
       const res = await fetch('http://localhost/family_tree/editRelative.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: editId, name: editName, gender: editGender, birthday: editBirthday, location: editLocation, income: editIncome, hasIllness: editHasIllness, isAlive: editIsAlive })
+        body: JSON.stringify({
+          username: currentUser,
+          id: editId,
+          name: editName,
+          gender: editGender,
+          birthday: editBirthday,
+          location: editLocation,
+          income: editIncome,
+          hasIllness: editHasIllness,
+          isAlive: editIsAlive
+        })
       });
       const result = await res.json();
       if (result.status === 'success') {
         alert('✨ ' + result.message);
         setEditId(''); setEditName(''); setEditGender('男'); setEditBirthday(''); 
         setEditLocation(''); setEditIncome(''); setEditHasIllness('無'); setEditIsAlive('是');
-        fetchData(); 
+        fetchData(currentUser); 
       } else { alert('❌ 修改失敗: ' + result.message); }
     } catch (error) { alert('系統發生錯誤！'); } finally { setIsEditing(false); }
   };
