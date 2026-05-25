@@ -4,11 +4,11 @@ import './App.css';
 
 function App() {
   // ==========================================
-  // 🔐 第一區塊：會員登入系統 State
+  // 🔐 第一區塊：會員登入系統 State (保留你的多帳號邏輯)
   // ==========================================
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [currentUser, setCurrentUser] = useState(''); // 記住現在登入的是誰
-  const [authMode, setAuthMode] = useState('login');  // 切換 'login' 或 'register'
+  const [currentUser, setCurrentUser] = useState(''); 
+  const [authMode, setAuthMode] = useState('login');  
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isAuthLoading, setIsAuthLoading] = useState(false);
@@ -18,7 +18,6 @@ function App() {
   // ==========================================
   const [familyData, setFamilyData] = useState({ nodes: [], links: [] });
   
-  // 1. 新增人物 State
   const [name, setName] = useState('');
   const [gender, setGender] = useState('男');
   const [birthday, setBirthday] = useState(''); 
@@ -28,15 +27,12 @@ function App() {
   const [isAlive, setIsAlive] = useState('是');       
   const [isAdding, setIsAdding] = useState(false); 
 
-  // 2. 建立關係 State
   const [person1, setPerson1] = useState('');
   const [person2, setPerson2] = useState('');
   const [relation, setRelation] = useState('PARENT_OF');
 
-  // 3. 刪除人物 State
   const [deleteName, setDeleteName] = useState('');
 
-  // 4. 修改人物 State
   const [editId, setEditId] = useState('');
   const [editName, setEditName] = useState('');
   const [editGender, setEditGender] = useState('男');
@@ -48,6 +44,10 @@ function App() {
   const [isEditing, setIsEditing] = useState(false);
 
   const svgRef = useRef();
+
+  // 取得數據用於畫面顯示
+  const totalMembers = familyData.nodes?.length || 0;
+  const totalRelations = familyData.links?.length || 0;
 
   // ==========================================
   // 🔐 登入/註冊 API 處理
@@ -70,9 +70,8 @@ function App() {
         if (authMode === 'login') {
             setIsLoggedIn(true);
             setCurrentUser(result.username);
-            fetchData(result.username); // 登入成功才去抓家族樹資料
+            fetchData(result.username); 
         } else {
-            // 註冊成功，自動切換到登入畫面，並清空密碼
             setAuthMode('login'); 
             setPassword('');
         }
@@ -87,17 +86,16 @@ function App() {
     }
   };
 
-  // 登出按鈕
   const handleLogout = () => {
       setIsLoggedIn(false);
       setCurrentUser('');
       setUsername('');
       setPassword('');
-      setFamilyData({ nodes: [], links: [] }); // 清空機密資料
+      setFamilyData({ nodes: [], links: [] }); 
   };
 
   // ==========================================
-  // 🌳 家族樹系統 API 處理
+  // 🌳 家族樹系統 API 處理 (保留傳遞 username 的邏輯)
   // ==========================================
   const fetchData = async (user = currentUser) => {
     try {
@@ -107,9 +105,7 @@ function App() {
       );
       const result = await res.json();
       if (result.status === 'success') setFamilyData(result.data);
-    } catch (error) {
-      console.error('抓取資料失敗', error);
-    }
+    } catch (error) { console.error('抓取資料失敗', error); }
   };
 
   const handleAddPerson = async (e) => {
@@ -119,16 +115,7 @@ function App() {
       const res = await fetch('http://localhost/family_tree/addRelative.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: currentUser,
-          name,
-          gender,
-          birthday,
-          location,
-          income,
-          hasIllness,
-          isAlive
-        })
+        body: JSON.stringify({ username: currentUser, name, gender, birthday, location, income, hasIllness, isAlive })
       });
       const result = await res.json();
       if (result.status === 'success') {
@@ -147,12 +134,7 @@ function App() {
       const res = await fetch('http://localhost/family_tree/addRelationship.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: currentUser,
-          person1,
-          person2,
-          relation
-        })
+        body: JSON.stringify({ username: currentUser, person1, person2, relation })
       });
       const result = await res.json();
       if (result.status === 'success') {
@@ -169,10 +151,7 @@ function App() {
       const res = await fetch('http://localhost/family_tree/deleteRelative.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: currentUser,
-          name: deleteName
-        })
+        body: JSON.stringify({ username: currentUser, name: deleteName })
       });
       const result = await res.json();
       if (result.status === 'success') {
@@ -207,17 +186,7 @@ function App() {
       const res = await fetch('http://localhost/family_tree/editRelative.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: currentUser,
-          id: editId,
-          name: editName,
-          gender: editGender,
-          birthday: editBirthday,
-          location: editLocation,
-          income: editIncome,
-          hasIllness: editHasIllness,
-          isAlive: editIsAlive
-        })
+        body: JSON.stringify({ username: currentUser, id: editId, name: editName, gender: editGender, birthday: editBirthday, location: editLocation, income: editIncome, hasIllness: editHasIllness, isAlive: editIsAlive })
       });
       const result = await res.json();
       if (result.status === 'success') {
@@ -230,7 +199,7 @@ function App() {
   };
 
   // ==========================================
-  // 🎨 D3.js 防彈無向圖畫圖邏輯
+  // 🎨 D3.js 畫圖邏輯 (你的防彈演算法 + 同學的 CSS 樣式)
   // ==========================================
   useEffect(() => {
     if (!isLoggedIn || !familyData || !familyData.nodes || familyData.nodes.length === 0) return;
@@ -239,18 +208,15 @@ function App() {
     svg.selectAll('*').remove();
     d3.select("body").selectAll(".d3-tooltip").remove(); 
     
+    // 套用同學的 .d3-tooltip 樣式類別
     const tooltip = d3.select("body").append("div")
       .attr("class", "d3-tooltip")
-      .style("position", "absolute").style("visibility", "hidden")
-      .style("background-color", "rgba(255, 255, 255, 0.95)").style("border", "1px solid #ced4da")
-      .style("border-radius", "8px").style("padding", "15px")
-      .style("box-shadow", "0px 4px 12px rgba(0, 0, 0, 0.15)").style("pointer-events", "none")
-      .style("font-size", "14px").style("line-height", "1.5").style("z-index", "1000"); 
+      .style("visibility", "hidden");
       
-    const width = 800; const height = 500;
-    svg.attr('width', '100%').attr('height', height).attr('viewBox', [0, 0, width, height])
-       .style('background-color', '#f8f9fa').style('border-radius', '8px');
+    const width = 980; const height = 580;
+    svg.attr('width', '100%').attr('height', height).attr('viewBox', [0, 0, width, height]);
 
+    // 嚴格保留你原本的 Object.create 避免破壞原型鏈
     const nodes = familyData.nodes.map(d => Object.create(d));
     const links = familyData.links.map(d => Object.create(d));
 
@@ -322,62 +288,73 @@ function App() {
                 d.fy = height / 2;
             } else {
                 const ratio = (gen - minGen) / (totalGens - 1);
-                d.fy = 100 + ratio * (height - 200); 
+                d.fy = 90 + ratio * (height - 180); 
             }
         } else {
             const year = parseInt(d.birthYear || (d.birthday ? String(d.birthday).substring(0, 4) : 0));
             if (!isNaN(year) && year > 0 && maxYear > minYear) {
                 const ratio = (year - minYear) / (maxYear - minYear);
-                d.fy = 80 + ratio * (height - 160); 
+                d.fy = 90 + ratio * (height - 180); 
             } else {
                 d.fy = height / 2; 
             }
         }
     });
 
+    // 調整物理引擎參數以適應新版型
     const simulation = d3.forceSimulation(nodes)
-        .force("link", d3.forceLink(links).id(d => d.id).distance(120))
-        .force("charge", d3.forceManyBody().strength(-800))
+        .force("link", d3.forceLink(links).id(d => d.id).distance(140))
+        .force("charge", d3.forceManyBody().strength(-900))
+        .force("collision", d3.forceCollide().radius(46))
         .force("x", d3.forceX(width / 2).strength(0.05));
 
-    const link = svg.append("g").attr("fill", "none").attr("stroke", "#adb5bd").attr("stroke-width", 2)
-        .selectAll("path").data(links).join("path");
+    // 加入同學的高級陰影特效
+    svg.append('defs').append('filter').attr('id', 'nodeShadow').append('feDropShadow').attr('dx', 0).attr('dy', 8).attr('stdDeviation', 8).attr('flood-opacity', 0.16);
+
+    const link = svg.append("g").attr("class", "graph-links")
+        .selectAll("path").data(links).join("path")
+        .attr("class", d => {
+            const type = d.type || d.label || d.relation || 'PARENT_OF';
+            return type === 'MARRIED_TO' ? 'graph-link married' : 'graph-link parent';
+        });
 
     const drag = d3.drag()
         .on("start", (event, d) => {
             if (!event.active) simulation.alphaTarget(0.3).restart();
             d.fx = d.x; 
         })
-        .on("drag", (event, d) => { d.fx = Math.max(30, Math.min(width - 30, event.x)); })
+        .on("drag", (event, d) => { d.fx = Math.max(48, Math.min(width - 48, event.x)); })
         .on("end", (event, d) => { if (!event.active) simulation.alphaTarget(0); });
 
-    const node = svg.append("g").selectAll("g").data(nodes).join("g")
-      .call(drag).style('cursor', 'grab')
+    const node = svg.append("g").attr("class", "graph-nodes").selectAll("g").data(nodes).join("g")
+      .attr("class", "graph-node").call(drag)
       .on("mouseover", (event, d) => {
         tooltip.html(`
-          <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px; color: #343a40;">👤 ${d.name}</div>
-          <div style="color: #495057;">
-            <div><strong>性別：</strong>${d.gender || '未知'}</div>
-            <div><strong>生日：</strong>${d.birthday || '未知'}</div>
-            <div><strong>地點：</strong>${d.location || '未知'}</div>
-            <div><strong>收入：</strong>${d.income ? `$${d.income}` : '未知'}</div>
-            <div><strong>身心疾病：</strong><span style="color: ${d.hasIllness === '有' ? '#e03131' : '#2b8a3e'}">${d.hasIllness || '無'}</span></div>
-            <div><strong>狀態：</strong>${d.isAlive || '是'}</div>
-          </div>
+          <div class="tooltip-title">👤 ${d.name}</div>
+          <div><strong>性別：</strong>${d.gender || '未知'}</div>
+          <div><strong>生日：</strong>${d.birthday || '未知'}</div>
+          <div><strong>地點：</strong>${d.location || '未知'}</div>
+          <div><strong>收入：</strong>${d.income ? `$${d.income}` : '未知'}</div>
+          <div><strong>身心疾病：</strong>${d.hasIllness || '無'}</div>
+          <div><strong>狀態：</strong>${d.isAlive || '是'}</div>
         `);
         tooltip.style("visibility", "visible");
       })
-      .on("mousemove", (event) => { tooltip.style("top", (event.pageY + 15) + "px").style("left", (event.pageX + 15) + "px"); })
+      .on("mousemove", (event) => { tooltip.style("top", (event.pageY + 16) + "px").style("left", (event.pageX + 16) + "px"); })
       .on("mouseout", () => { tooltip.style("visibility", "hidden"); });
       
+    // 套用同學的美編節點形狀
     node.each(function(d) {
         const group = d3.select(this);
-        if (d.gender === '男') { group.append("rect").attr("x", -25).attr("y", -25).attr("width", 50).attr("height", 50).attr("fill", "#74c0fc").attr("stroke", "#fff").attr("stroke-width", 3); } 
-        else if (d.gender === '女') { group.append("circle").attr("r", 28).attr("fill", "#ffc9c9").attr("stroke", "#fff").attr("stroke-width", 3); } 
-        else { group.append("circle").attr("r", 28).attr("fill", "#e9ecef").attr("stroke", "#fff").attr("stroke-width", 3); }
+        const shapeClass = d.gender === '男' ? 'male' : d.gender === '女' ? 'female' : 'unknown';
+        if (d.gender === '男') { 
+            group.append("rect").attr("class", `person-shape ${shapeClass}`).attr("x", -30).attr("y", -30).attr("width", 60).attr("height", 60).attr("rx", 18); 
+        } else { 
+            group.append("circle").attr("class", `person-shape ${shapeClass}`).attr("r", 32); 
+        }
     });
 
-    node.append("text").text(d => d.name).attr('text-anchor', 'middle').attr('dy', '.3em').style('fill', '#343a40').style('font-weight', 'bold').style('font-size', '15px');
+    node.append("text").text(d => d.name).attr('text-anchor', 'middle').attr('dy', '.32em').attr('class', 'node-label');
 
     simulation.on("tick", () => {
         link.attr("d", d => {
@@ -387,174 +364,179 @@ function App() {
         });
         node.attr("transform", d => `translate(${d.x}, ${d.y})`);
     });
-  }, [familyData, isLoggedIn]); // 🌟 當登入狀態改變時，重新畫圖
-
+  }, [familyData, isLoggedIn]);
 
   // ==========================================
   // 🚪 畫面渲染邏輯 (未登入 vs 已登入)
   // ==========================================
 
-  // 【情況 A：還沒登入，顯示登入/註冊畫面】
   if (!isLoggedIn) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f1f3f5' }}>
-        <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '12px', boxShadow: '0 8px 24px rgba(0,0,0,0.1)', width: '100%', maxWidth: '400px' }}>
-          <h2 style={{ textAlign: 'center', color: '#2b8a3e', marginTop: 0 }}>🌳 家族樹系統</h2>
-          <h3 style={{ textAlign: 'center', color: '#495057' }}>{authMode === 'login' ? '會員登入' : '註冊新帳號'}</h3>
-          
-          <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '5px', color: '#495057' }}>帳號：</label>
-              <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ced4da', boxSizing: 'border-box' }} />
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: '5px', color: '#495057' }}>密碼：</label>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ced4da', boxSizing: 'border-box' }} />
-            </div>
-            
-            <button type="submit" disabled={isAuthLoading} style={{ padding: '12px', backgroundColor: '#40c057', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '16px', cursor: isAuthLoading ? 'not-allowed' : 'pointer', marginTop: '10px' }}>
-              {isAuthLoading ? '處理中...' : (authMode === 'login' ? '登入' : '註冊')}
+      <main className="app-shell" style={{ display: 'grid', placeItems: 'center', minHeight: '100vh', padding: 0 }}>
+        <article className="panel-card" style={{ width: '100%', maxWidth: '420px', padding: '40px' }}>
+          <h2 style={{ textAlign: 'center', marginBottom: '24px', color: 'var(--text-h)' }}>
+            🌳 {authMode === 'login' ? '會員登入' : '註冊新帳號'}
+          </h2>
+          <form className="form-grid" onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <label style={{ width: '100%' }}>帳號：
+              <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} required />
+            </label>
+            <label style={{ width: '100%' }}>密碼：
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            </label>
+            <button className="submit-button green" type="submit" disabled={isAuthLoading} style={{ marginTop: '8px' }}>
+              {isAuthLoading ? '處理中...' : (authMode === 'login' ? '登入系統' : '註冊帳號')}
             </button>
           </form>
-
-          <div style={{ textAlign: 'center', marginTop: '20px' }}>
-            <span style={{ color: '#868e96', fontSize: '14px' }}>
-              {authMode === 'login' ? '還沒有帳號嗎？' : '已經有帳號了？'}
+          <div style={{ textAlign: 'center', marginTop: '24px' }}>
+            <span style={{ color: 'var(--muted)', fontSize: '14px' }}>
+              {authMode === 'login' ? '還沒有帳號嗎？ ' : '已經有帳號了？ '}
             </span>
             <button 
               onClick={() => { setAuthMode(authMode === 'login' ? 'register' : 'login'); setPassword(''); }} 
-              style={{ background: 'none', border: 'none', color: '#228be6', cursor: 'pointer', textDecoration: 'underline', fontSize: '14px' }}>
+              style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline', fontWeight: 'bold' }}>
               {authMode === 'login' ? '點我註冊' : '點我登入'}
             </button>
           </div>
-        </div>
-      </div>
+        </article>
+      </main>
     );
   }
 
-  // 【情況 B：已經登入，顯示主要系統畫面】
   return (
-    <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '1200px', margin: '0 auto' }}>
-      
-      {/* 頁首與登出按鈕 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '2px solid #e9ecef', paddingBottom: '10px' }}>
-        <h1 style={{ color: '#2b8a3e', margin: 0 }}>🌳 互動式家族樹系統</h1>
+    <main className="app-shell">
+      <section className="hero-section">
+        <div className="hero-copy">
+          <p className="eyebrow">Family Tree Dashboard</p>
+          <h1>互動式家族樹系統</h1>
+          <p className="hero-description">
+            用更清楚的視覺化方式管理成員、建立關係，並在同一個畫面查看專屬於你的家族網絡。
+          </p>
+          <div className="hero-actions">
+            <a className="primary-action" href="#add-member">新增成員</a>
+            <a className="secondary-action" href="#family-map">查看家族圖</a>
+          </div>
+        </div>
+
+        <div className="hero-panel" aria-label="資料摘要">
+          <div className="stat-card">
+            <span>{totalMembers}</span>
+            <p>成員數</p>
+          </div>
+          <div className="stat-card">
+            <span>{totalRelations}</span>
+            <p>關係連線</p>
+          </div>
+          <div className="mini-tree" aria-hidden="true">
+            <div className="mini-node root">你</div>
+            <div className="mini-line" />
+            <div className="mini-row">
+              <div className="mini-node">父母</div>
+              <div className="mini-node accent">配偶</div>
+              <div className="mini-node">子女</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 🌟 Toolbar 融入登出功能與使用者名稱 */}
+      <section className="toolbar">
         <div>
-            <span style={{ marginRight: '15px', color: '#495057', fontWeight: 'bold' }}>歡迎，{currentUser} 👋</span>
-            <button onClick={handleLogout} style={{ padding: '6px 12px', backgroundColor: '#fa5252', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>登出</button>
+          <strong>目前資料庫狀態</strong>
+          <span>{totalMembers === 0 ? '尚未建立成員' : `已建立 ${totalMembers} 位成員`}</span>
         </div>
-      </div>
+        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '12px' }}>
+          <span style={{ color: 'var(--text-h)', fontWeight: 'bold' }}>歡迎，{currentUser} 👋</span>
+          <button className="ghost-button" type="button" onClick={handleLogout} style={{ minHeight: '36px', padding: '0 16px', color: '#d94848' }}>登出</button>
+          <button className="primary-action" type="button" onClick={() => fetchData(currentUser)} style={{ minHeight: '36px', padding: '0 16px' }}>重新整理</button>
+        </div>
+      </section>
 
-      <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', flexWrap: 'wrap' }}>
-        
-        {/* 第一區塊：新增 */}
-        <div style={{ flex: '1 1 250px', padding: '20px', border: '1px solid #dee2e6', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-          <h3 style={{ marginTop: 0, color: '#495057' }}>➕ 1. 新增成員</h3>
-          <form onSubmit={handleAddPerson} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div><label style={{display:'inline-block', width:'80px'}}>姓名: </label><input style={{padding:'5px', width:'60%'}} value={name} onChange={e => setName(e.target.value)} required /></div>
-            <div><label style={{display:'inline-block', width:'80px'}}>性別: </label>
-              <select style={{padding:'5px', width:'60%'}} value={gender} onChange={e => setGender(e.target.value)}>
-                <option value="男">男</option><option value="女">女</option><option value="未知">未知</option>
-              </select></div>
-            <div><label style={{display:'inline-block', width:'80px'}}>生日: </label><input type="date" style={{padding:'5px', width:'60%'}} value={birthday} onChange={e => setBirthday(e.target.value)} /></div>
-            <div><label style={{display:'inline-block', width:'80px'}}>地點: </label><input style={{padding:'5px', width:'60%'}} value={location} onChange={e => setLocation(e.target.value)} /></div>
-            <div><label style={{display:'inline-block', width:'80px'}}>年收入: </label><input type="number" style={{padding:'5px', width:'60%'}} value={income} onChange={e => setIncome(e.target.value)} /></div>
-            <div><label style={{display:'inline-block', width:'80px'}}>身心疾病: </label>
-              <select style={{padding:'5px', width:'60%'}} value={hasIllness} onChange={e => setHasIllness(e.target.value)}>
-                <option value="無">無</option><option value="有">有</option>
-              </select></div>
-            <div><label style={{display:'inline-block', width:'80px'}}>是否在世: </label>
-              <select style={{padding:'5px', width:'60%'}} value={isAlive} onChange={e => setIsAlive(e.target.value)}>
-                <option value="是">是</option><option value="否">已故</option>
-              </select></div>
-            <button type="submit" disabled={isAdding} style={{ padding: '8px', backgroundColor: isAdding ? '#ced4da' : '#40c057', color: 'white', border: 'none', borderRadius: '4px', cursor: isAdding ? 'not-allowed' : 'pointer', fontWeight: 'bold', marginTop: '10px' }}>{isAdding ? '連線中...' : '建立人物'}</button>
+      <section className="control-grid" aria-label="家族樹操作區">
+        <article id="add-member" className="panel-card accent-green">
+          <div className="card-heading">
+            <span className="card-icon">＋</span>
+            <div><p className="card-kicker">Step 1</p><h2>新增成員</h2></div>
+          </div>
+          <form className="form-grid" onSubmit={handleAddPerson}>
+            <label>姓名<input value={name} onChange={(e) => setName(e.target.value)} required /></label>
+            <label>性別<select value={gender} onChange={(e) => setGender(e.target.value)}><option value="男">男</option><option value="女">女</option><option value="未知">未知</option></select></label>
+            <label>生日<input type="date" value={birthday} onChange={(e) => setBirthday(e.target.value)} /></label>
+            <label>地點<input placeholder="例如：台北市" value={location} onChange={(e) => setLocation(e.target.value)} /></label>
+            <label>年收入<input type="number" placeholder="例如：800000" value={income} onChange={(e) => setIncome(e.target.value)} /></label>
+            <label>身心疾病<select value={hasIllness} onChange={(e) => setHasIllness(e.target.value)}><option value="無">無</option><option value="有">有</option></select></label>
+            <label>是否在世<select value={isAlive} onChange={(e) => setIsAlive(e.target.value)}><option value="是">是</option><option value="否">已故</option></select></label>
+            <button className="submit-button green" type="submit" disabled={isAdding}>{isAdding ? '建立中...' : '建立人物'}</button>
           </form>
-        </div>
+        </article>
 
-        {/* 第二區塊：建立關係 */}
-        <div style={{ flex: '1 1 250px', padding: '20px', border: '1px solid #4dabf7', borderRadius: '12px', backgroundColor: '#e7f5ff', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-          <h3 style={{ marginTop: 0, color: '#1864ab' }}>🔗 2. 建立關係</h3>
-          <form onSubmit={handleAddRelation} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div><label style={{display:'inline-block', width:'60px'}}>人物 A: </label>
-              <select style={{padding:'5px', width:'60%'}} value={person1} onChange={e => setPerson1(e.target.value)} required>
-                <option value="">請選擇...</option>
-                {familyData.nodes.map(p => <option key={`p1-${p.id}`} value={p.name}>{p.name}</option>)}
-              </select>
-            </div>
-            <div><label style={{display:'inline-block', width:'60px'}}>關係: </label>
-              <select style={{padding:'5px', width:'60%'}} value={relation} onChange={e => setRelation(e.target.value)}>
-                <option value="PARENT_OF">是他的父母</option><option value="MARRIED_TO">是他的配偶</option>
-              </select>
-            </div>
-            <div><label style={{display:'inline-block', width:'60px'}}>人物 B: </label>
-              <select style={{padding:'5px', width:'60%'}} value={person2} onChange={e => setPerson2(e.target.value)} required>
-                <option value="">請選擇...</option>
-                {familyData.nodes.map(p => <option key={`p2-${p.id}`} value={p.name}>{p.name}</option>)}
-              </select>
-            </div>
-            <button type="submit" style={{ padding: '8px', backgroundColor: '#228be6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>牽紅線連起來！</button>
+        <article className="panel-card accent-blue">
+          <div className="card-heading">
+            <span className="card-icon">↔</span>
+            <div><p className="card-kicker">Step 2</p><h2>建立關係</h2></div>
+          </div>
+          <form className="form-grid" onSubmit={handleAddRelation}>
+            <label>人物 A<select value={person1} onChange={(e) => setPerson1(e.target.value)} required><option value="">請選擇...</option>{familyData.nodes.map((p) => <option key={`p1-${p.id}`} value={p.name}>{p.name}</option>)}</select></label>
+            <label>關係<select value={relation} onChange={(e) => setRelation(e.target.value)}><option value="PARENT_OF">是他的父母</option><option value="MARRIED_TO">是他的配偶</option></select></label>
+            <label>人物 B<select value={person2} onChange={(e) => setPerson2(e.target.value)} required><option value="">請選擇...</option>{familyData.nodes.map((p) => <option key={`p2-${p.id}`} value={p.name}>{p.name}</option>)}</select></label>
+            <button className="submit-button blue" type="submit">建立連線</button>
           </form>
-        </div>
+        </article>
 
-        {/* 第三區塊：刪除成員 */}
-        <div style={{ flex: '1 1 250px', padding: '20px', border: '1px solid #ff8787', borderRadius: '12px', backgroundColor: '#fff5f5', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-          <h3 style={{ marginTop: 0, color: '#c92a2a' }}>🗑️ 3. 刪除成員</h3>
-          <form onSubmit={handleDeletePerson} style={{ display: 'flex', flexDirection: 'column', gap: '12px', height: '100%' }}>
-            <div><label style={{display:'inline-block', width:'60px'}}>人物: </label>
-              <select style={{padding:'5px', width:'60%'}} value={deleteName} onChange={e => setDeleteName(e.target.value)} required>
-                <option value="">請選擇要刪除的人...</option>
-                {familyData.nodes.map(p => <option key={`del-${p.id}`} value={p.name}>{p.name}</option>)}
-              </select>
-            </div>
-            <p style={{ fontSize: '12px', color: '#868e96', margin: '0' }}>注意：刪除人物會同時拔除他身上的所有連線。</p>
-            <button type="submit" style={{ padding: '8px', backgroundColor: '#fa5252', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', marginTop: 'auto' }}>永久刪除</button>
-          </form>
-        </div>
-
-        {/* 第四區塊：修改成員 */}
-        <div style={{ flex: '1 1 250px', padding: '20px', border: '1px solid #fcc419', borderRadius: '12px', backgroundColor: '#fff9db', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-          <h3 style={{ marginTop: 0, color: '#e67700' }}>✏️ 4. 修改成員</h3>
-          <form onSubmit={handleEditPerson} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div><label style={{display:'inline-block', width:'80px'}}>選擇人物: </label>
-              <select style={{padding:'5px', width:'60%'}} value={editId} onChange={handleEditSelection} required>
-                <option value="">請選擇要修改的人...</option>
-                {familyData.nodes.map(p => <option key={`edit-${p.id}`} value={p.id}>{p.name}</option>)}
-              </select>
-            </div>
+        <article className="panel-card accent-yellow">
+          <div className="card-heading">
+            <span className="card-icon">✎</span>
+            <div><p className="card-kicker">Step 3</p><h2>修改成員</h2></div>
+          </div>
+          <form className="form-grid" onSubmit={handleEditPerson}>
+            <label className="full-field">選擇人物<select value={editId} onChange={handleEditSelection} required><option value="">請選擇要修改的人...</option>{familyData.nodes.map((p) => <option key={`edit-${p.id}`} value={p.id}>{p.name}</option>)}</select></label>
             {editId && (
               <>
-                <div><label style={{display:'inline-block', width:'80px'}}>姓名: </label><input style={{padding:'5px', width:'60%'}} value={editName} onChange={e => setEditName(e.target.value)} required /></div>
-                <div><label style={{display:'inline-block', width:'80px'}}>性別: </label>
-                  <select style={{padding:'5px', width:'60%'}} value={editGender} onChange={e => setEditGender(e.target.value)}>
-                    <option value="男">男</option><option value="女">女</option><option value="未知">未知</option>
-                  </select></div>
-                <div><label style={{display:'inline-block', width:'80px'}}>生日: </label><input type="date" style={{padding:'5px', width:'60%'}} value={editBirthday} onChange={e => setEditBirthday(e.target.value)} /></div>
-                <div><label style={{display:'inline-block', width:'80px'}}>地點: </label><input style={{padding:'5px', width:'60%'}} value={editLocation} onChange={e => setEditLocation(e.target.value)} /></div>
-                <div><label style={{display:'inline-block', width:'80px'}}>年收入: </label><input type="number" style={{padding:'5px', width:'60%'}} value={editIncome} onChange={e => setEditIncome(e.target.value)} /></div>
-                <div><label style={{display:'inline-block', width:'80px'}}>身心疾病: </label>
-                  <select style={{padding:'5px', width:'60%'}} value={editHasIllness} onChange={e => setEditHasIllness(e.target.value)}>
-                    <option value="無">無</option><option value="有">有</option>
-                  </select></div>
-                <div><label style={{display:'inline-block', width:'80px'}}>是否在世: </label>
-                  <select style={{padding:'5px', width:'60%'}} value={editIsAlive} onChange={e => setEditIsAlive(e.target.value)}>
-                    <option value="是">是</option><option value="否">已故</option>
-                  </select></div>
-                <button type="submit" disabled={isEditing} style={{ padding: '8px', backgroundColor: isEditing ? '#ced4da' : '#fab005', color: 'white', border: 'none', borderRadius: '4px', cursor: isEditing ? 'not-allowed' : 'pointer', fontWeight: 'bold', marginTop: '10px' }}>{isEditing ? '更新中...' : '儲存修改'}</button>
+                <label>姓名<input value={editName} onChange={(e) => setEditName(e.target.value)} required /></label>
+                <label>性別<select value={editGender} onChange={(e) => setEditGender(e.target.value)}><option value="男">男</option><option value="女">女</option><option value="未知">未知</option></select></label>
+                <label>生日<input type="date" value={editBirthday} onChange={(e) => setEditBirthday(e.target.value)} /></label>
+                <label>地點<input value={editLocation} onChange={(e) => setEditLocation(e.target.value)} /></label>
+                <label>年收入<input type="number" value={editIncome} onChange={(e) => setEditIncome(e.target.value)} /></label>
+                <label>身心疾病<select value={editHasIllness} onChange={(e) => setEditHasIllness(e.target.value)}><option value="無">無</option><option value="有">有</option></select></label>
+                <label>是否在世<select value={editIsAlive} onChange={(e) => setEditIsAlive(e.target.value)}><option value="是">是</option><option value="否">已故</option></select></label>
+                <button className="submit-button yellow" type="submit" disabled={isEditing}>{isEditing ? '更新中...' : '儲存修改'}</button>
               </>
             )}
           </form>
+        </article>
+
+        <article className="panel-card accent-red">
+          <div className="card-heading">
+            <span className="card-icon">−</span>
+            <div><p className="card-kicker">Step 4</p><h2>刪除成員</h2></div>
+          </div>
+          <form className="form-grid" onSubmit={handleDeletePerson}>
+            <label className="full-field">人物<select value={deleteName} onChange={(e) => setDeleteName(e.target.value)} required><option value="">請選擇要刪除的人...</option>{familyData.nodes.map((p) => <option key={`del-${p.id}`} value={p.name}>{p.name}</option>)}</select></label>
+            <p className="warning-text">刪除人物會同時移除他的所有關係連線，請確認後再操作。</p>
+            <button className="submit-button red" type="submit">永久刪除</button>
+          </form>
+        </article>
+      </section>
+
+      <section id="family-map" className="graph-section">
+        <div className="section-heading">
+          <div><p className="card-kicker">Visualization</p><h2>家族關係圖</h2></div>
+          <div className="legend">
+            <span><i className="legend-square" /> 男性</span>
+            <span><i className="legend-circle" /> 女性</span>
+            <span><i className="legend-line" /> 關係</span>
+          </div>
         </div>
 
-      </div>
-
-      {/* 畫布區塊 */}
-      <div style={{ border: '2px solid #ced4da', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 8px 16px rgba(0,0,0,0.1)' }}>
-        {(!familyData || !familyData.nodes || familyData.nodes.length === 0) 
-            ? <p style={{textAlign: 'center', padding: '50px'}}>目前資料庫空空如也，趕快新增人物吧！</p> 
-            : <svg ref={svgRef}></svg>
-        }
-      </div>
-    </div>
+        <div className="graph-canvas">
+          {totalMembers === 0 ? (
+            <div className="empty-state">
+              <div>🌱</div><h3>目前資料庫空空如也</h3><p>先新增一位家族成員，就可以開始建立你的家族圖。</p>
+            </div>
+          ) : ( <svg ref={svgRef} /> )}
+        </div>
+      </section>
+    </main>
   );
 }
 
