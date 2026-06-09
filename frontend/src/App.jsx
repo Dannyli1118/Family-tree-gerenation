@@ -603,6 +603,41 @@ function App() {
         .on("drag", (event, d) => { d.fx = Math.max(48, Math.min(width - 48, event.x)); })
         .on("end", (event, d) => { if (!event.active) simulation.alphaTarget(0); });
 
+    function getSymbolType(d) {
+      const disabled =
+        d.hasIllness === '有' ||
+        d.hasIllness === '是' ||
+        d.hasIllness === true;
+
+      const dead =
+        d.isAlive === '否';
+
+      const triangle =
+        d.gender === '懷孕' ||
+        d.gender === '未知' ||
+        d.gender === '不清楚性別';
+
+      if (triangle && disabled) return 'disabledTriangle';
+
+      if (triangle) return 'triangle';
+
+      if (dead) {
+        return d.gender === '女'
+          ? 'deadFemale'
+          : 'deadMale';
+      }
+
+      if (disabled) {
+        return d.gender === '女'
+          ? 'disabledFemale'
+          : 'disabledMale';
+      }
+
+      return d.gender === '女'
+        ? 'female'
+        : 'male';
+    }
+
     const node = svg.append("g").attr("class", "graph-nodes").selectAll("g").data(nodes).join("g")
       .attr("class", "graph-node").call(drag)
       .on("mouseover", (event, d) => {
@@ -684,13 +719,117 @@ function App() {
       
     // 套用同學的美編節點形狀
     node.each(function(d) {
-        const group = d3.select(this);
-        const shapeClass = d.gender === '男' ? 'male' : d.gender === '女' ? 'female' : 'unknown';
-        if (d.gender === '男') { 
-            group.append("rect").attr("class", `person-shape ${shapeClass}`).attr("x", -30).attr("y", -30).attr("width", 60).attr("height", 60).attr("rx", 18); 
-        } else { 
-            group.append("circle").attr("class", `person-shape ${shapeClass}`).attr("r", 32); 
-        }
+      const group = d3.select(this);
+      const type = getSymbolType(d);
+
+      const size = 60;
+      const r = 30;
+
+      // 男性
+      if (
+        type === 'male' ||
+        type === 'deadMale' ||
+        type === 'disabledMale'
+      ) {
+        group.append("rect")
+          .attr("x", -r)
+          .attr("y", -r)
+          .attr("width", size)
+          .attr("height", size)
+          .attr("fill", "white")
+          .attr("stroke", "#333")
+          .attr("stroke-width", 2);
+      }
+
+      // 女性
+      if (
+        type === 'female' ||
+        type === 'deadFemale' ||
+        type === 'disabledFemale'
+      ) {
+        group.append("circle")
+          .attr("r", r)
+          .attr("fill", "white")
+          .attr("stroke", "#333")
+          .attr("stroke-width", 2);
+      }
+
+      // 懷孕 / 不明性別
+      if (
+        type === 'triangle' ||
+        type === 'disabledTriangle'
+      ) {
+
+        group.append("path")
+          .attr(
+            "d",
+            `M 0 -30 L 26 20 L -26 20 Z`
+          )
+          .attr("fill", "white")
+          .attr("stroke", "#333")
+          .attr("stroke-width", 2);
+      }
+
+      // 身障男性
+      if (type === 'disabledMale') {
+
+        group.append("rect")
+          .attr("x", 0)
+          .attr("y", -r)
+          .attr("width", r)
+          .attr("height", size)
+          .attr("fill", "black");
+      }
+
+      // 身障女性
+      if (type === 'disabledFemale') {
+
+        group.append("path")
+          .attr(
+            "d",
+            d3.arc()({
+              innerRadius: 0,
+              outerRadius: r,
+              startAngle: 0,
+              endAngle: Math.PI
+            })
+          )
+          .attr("fill", "black");
+      }
+
+      // 身障三角形
+      if (type === 'disabledTriangle') {
+
+        group.append("path")
+          .attr(
+            "d",
+            `M 0 -30 L 26 20 L 0 20 Z`
+          )
+          .attr("fill", "black");
+      }
+
+      // 死亡
+      if (
+        type === 'deadMale' ||
+        type === 'deadFemale'
+      ) {
+
+        group.append("line")
+          .attr("x1", -r)
+          .attr("y1", -r)
+          .attr("x2", r)
+          .attr("y2", r)
+          .attr("stroke", "black")
+          .attr("stroke-width", 3);
+
+        group.append("line")
+          .attr("x1", r)
+          .attr("y1", -r)
+          .attr("x2", -r)
+          .attr("y2", r)
+          .attr("stroke", "black")
+          .attr("stroke-width", 3);
+      }
     });
     ////////////////////////////////////////////////////////////////////////////
     const deleteButton = node
@@ -730,15 +869,35 @@ function App() {
       .attr("font-weight", 900)
       .style("pointer-events", "none");
   ///////////////////////////////////////////////////////////////////////
-    node.append("text").text(d => d.name).attr('text-anchor', 'middle').attr('dy', '.32em').attr('class', 'node-label');
+    node.append("text")
+    .text(d => d.name)
+    .attr("text-anchor", "middle")
+    .attr("y", 55)
+    .attr("class", "node-label")
+    .attr("font-size", 14)
+    .attr("font-weight", "bold")
+    .attr("fill", "#333");
 
     simulation.on("tick", () => {
-        link.attr("d", d => {
-            if (d.source.x === undefined || d.target.x === undefined) return "";
-            const midY = (d.source.y + d.target.y) / 2;
-            return `M${d.source.x},${d.source.y} L${d.source.x},${midY} L${d.target.x},${midY} L${d.target.x},${d.target.y}`;
-        });
-        node.attr("transform", d => `translate(${d.x}, ${d.y})`);
+      link.attr("d", d => {
+        if (d.source.x === undefined || d.target.x === undefined) return "";
+
+        const type = d.type || d.label || d.relation || 'PARENT_OF';
+
+        // 配偶關係：維持水平線，不要往名字下面接
+        if (type === 'MARRIED_TO') {
+          return `M${d.source.x},${d.source.y} L${d.target.x},${d.target.y}`;
+        }
+
+        // 父母子女關係：線從名字下方開始，避免重疊
+        const sourceY = d.source.y + 70;
+        const targetY = d.target.y - 35;
+        const midY = (sourceY + targetY) / 2;
+
+        return `M${d.source.x},${sourceY} L${d.source.x},${midY} L${d.target.x},${midY} L${d.target.x},${targetY}`;
+      });
+
+      node.attr("transform", d => `translate(${d.x}, ${d.y})`);
     });
   }, [familyData, isLoggedIn]);
 
@@ -836,7 +995,11 @@ function App() {
           </div>
           <form className="form-grid" onSubmit={handleAddPerson}>
             <label>姓名<input value={name} onChange={(e) => setName(e.target.value)} required /></label>
-            <label>性別<select value={gender} onChange={(e) => setGender(e.target.value)}><option value="男">男</option><option value="女">女</option><option value="未知">未知</option></select></label>
+            <label>性別／是否懷孕<select value={gender} onChange={(e) => setGender(e.target.value)}>
+              <option value="男">男</option>
+              <option value="女">女</option>
+              <option value="懷孕">懷孕</option>
+              <option value="不清楚性別">不清楚性別</option></select></label>
             <label>生日<input type="date" value={birthday} onChange={(e) => setBirthday(e.target.value)} /></label>
             <label>電話<input type="tel" placeholder="例如：0912345678" value={phone} onChange={(e) => setPhone(e.target.value)} /></label>
             <label>Email<input type="email" placeholder="例如：example@gmail.com" value={email} onChange={(e) => setEmail(e.target.value)} /></label>
@@ -879,7 +1042,11 @@ function App() {
             {editId && (
               <>
                 <label>姓名<input value={editName} onChange={(e) => setEditName(e.target.value)} required /></label>
-                <label>性別<select value={editGender} onChange={(e) => setEditGender(e.target.value)}><option value="男">男</option><option value="女">女</option><option value="未知">未知</option></select></label>
+                <label>性別<select value={editGender} onChange={(e) => setEditGender(e.target.value)}>
+                  <option value="男">男</option>
+                  <option value="女">女</option>
+                  <option value="懷孕">懷孕</option>
+                  <option value="不清楚性別">不清楚性別</option></select></label>
                 <label>生日<input type="date" value={editBirthday} onChange={(e) => setEditBirthday(e.target.value)} /></label>
                 <label>電話<input type="tel" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} /></label>
                 <label>Email<input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} /></label>
