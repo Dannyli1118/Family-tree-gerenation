@@ -512,7 +512,7 @@ function App() {
             if (type === 'PARENT_OF') {
                 adj.get(s).push({ to: t, weight: 1 });  
                 adj.get(t).push({ to: s, weight: -1 }); 
-            } else if (type === 'MARRIED_TO') {
+            } else if (type === 'MARRIED_TO' || type === 'DIVORCED' || type === 'COHABITATION' || type === 'SEPARATED') {
                 adj.get(s).push({ to: t, weight: 0 });  
                 adj.get(t).push({ to: s, weight: 0 });
             }
@@ -592,7 +592,13 @@ function App() {
         .selectAll("path").data(links).join("path")
         .attr("class", d => {
             const type = d.type || d.label || d.relation || 'PARENT_OF';
-            return type === 'MARRIED_TO' ? 'graph-link married' : 'graph-link parent';
+
+            if (type === 'MARRIED_TO') return 'graph-link married';
+            if (type === 'COHABITATION') return 'graph-link cohabitation';
+            if (type === 'SEPARATED') return 'graph-link separated';
+            if (type === 'DIVORCED') return 'graph-link divorced';
+
+            return 'graph-link parent';
         });
 
     const drag = d3.drag()
@@ -879,28 +885,113 @@ function App() {
     .attr("fill", "#333");
 
     simulation.on("tick", () => {
+      svg.selectAll(".relationship-marker").remove();
+
       link.attr("d", d => {
         if (d.source.x === undefined || d.target.x === undefined) return "";
 
         const type = d.type || d.label || d.relation || 'PARENT_OF';
 
-        // 配偶關係：維持水平線，不要往名字下面接
-        if (type === 'MARRIED_TO') {
-          return `M${d.source.x},${d.source.y} L${d.target.x},${d.target.y}`;
+        const isMarriageLine =
+          type === 'MARRIED_TO' ||
+          type === 'DIVORCED';
+
+        const isCohabitLine =
+          type === 'COHABITATION' ||
+          type === 'SEPARATED';
+
+        // 婚姻線、同居線可以共存，所以上下錯開
+        if (isMarriageLine || isCohabitLine) {
+          const offsetY = isMarriageLine ? -8 : 8;
+
+          return `
+            M${d.source.x},${d.source.y + offsetY}
+            L${d.target.x},${d.target.y + offsetY}
+          `;
         }
 
-        // 父母子女關係：線從名字下方開始，避免重疊
-        const sourceY = d.source.y + 70;
-        const targetY = d.target.y - 35;
+        // 父母子女線：依照上下方向接線，避免人物頭上凸點
+        const sourceIsAbove = d.source.y < d.target.y;
+
+        const sourceY = sourceIsAbove
+          ? d.source.y + 70
+          : d.source.y - 35;
+
+        const targetY = sourceIsAbove
+          ? d.target.y - 35
+          : d.target.y + 70;
+
         const midY = (sourceY + targetY) / 2;
 
-        return `M${d.source.x},${sourceY} L${d.source.x},${midY} L${d.target.x},${midY} L${d.target.x},${targetY}`;
+        return `
+          M${d.source.x},${sourceY}
+          L${d.source.x},${midY}
+          L${d.target.x},${midY}
+          L${d.target.x},${targetY}
+        `;
       });
+
+      links.forEach(d => {
+
+        const type = d.type || d.label || d.relation;
+
+        if (
+            type !== 'SEPARATED' &&
+            type !== 'DIVORCED'
+        ) return;
+
+        const isMarriageLine =
+          type === 'MARRIED_TO' ||
+          type === 'DIVORCED';
+
+        const isCohabitLine =
+          type === 'COHABITATION' ||
+          type === 'SEPARATED';
+
+        const offsetY = isMarriageLine ? -8 : 8;
+
+        const midX = (d.source.x + d.target.x) / 2;
+        const midY = ((d.source.y + offsetY) + (d.target.y + offsetY)) / 2;
+
+        const marker = svg.append("g")
+            .attr("class", "relationship-marker");
+
+        // 分居：一條斜線
+        if (type === 'SEPARATED') {
+          marker.append("line")
+            .attr("x1", midX - 5)
+            .attr("y1", midY - 8)
+            .attr("x2", midX + 5)
+            .attr("y2", midY + 8)
+            .attr("stroke", "#333")
+            .attr("stroke-width", 2);
+        }
+
+        // 離婚：兩條斜線
+        if (type === 'DIVORCED') {
+          marker.append("line")
+            .attr("x1", midX - 6)
+            .attr("y1", midY - 8)
+            .attr("x2", midX + 6)
+            .attr("y2", midY + 8)
+            .attr("stroke", "#333")
+            .attr("stroke-width", 2);
+
+          marker.append("line")
+            .attr("x1", midX + 6)
+            .attr("y1", midY - 8)
+            .attr("x2", midX - 6)
+            .attr("y2", midY + 8)
+            .attr("stroke", "#333")
+            .attr("stroke-width", 2);
+        }
+
+});
 
       node.attr("transform", d => `translate(${d.x}, ${d.y})`);
     });
   }, [familyData, isLoggedIn]);
-
+  
   // ==========================================
   // 🚪 畫面渲染邏輯 (未登入 vs 已登入)
   // ==========================================
@@ -1026,7 +1117,11 @@ function App() {
           </div>
           <form className="form-grid" onSubmit={handleAddRelation}>
             <label>人物 A<select value={person1} onChange={(e) => setPerson1(e.target.value)} required><option value="">請選擇...</option>{familyData.nodes.map((p) => <option key={`p1-${p.id}`} value={p.name}>{p.name}</option>)}</select></label>
-            <label>關係<select value={relation} onChange={(e) => setRelation(e.target.value)}><option value="PARENT_OF">是他的父母</option><option value="MARRIED_TO">是他的配偶</option></select></label>
+            <label>關係<select value={relation} onChange={(e) => setRelation(e.target.value)}><option value="PARENT_OF">父母子女</option>
+              <option value="MARRIED_TO">已婚</option>
+              <option value="COHABITATION">同居</option>
+              <option value="SEPARATED">分居</option>
+              <option value="DIVORCED">離婚</option></select></label>
             <label>人物 B<select value={person2} onChange={(e) => setPerson2(e.target.value)} required><option value="">請選擇...</option>{familyData.nodes.map((p) => <option key={`p2-${p.id}`} value={p.name}>{p.name}</option>)}</select></label>
             <button className="submit-button blue" type="submit">建立連線</button>
           </form>
