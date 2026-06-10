@@ -1205,10 +1205,35 @@ function App() {
             </button>
           </div>
 
-          <div className="legend">
-            <span><i className="legend-square" /> 男性</span>
-            <span><i className="legend-circle" /> 女性</span>
-            <span><i className="legend-line" /> 關係</span>
+          <div className="legend full-legend">
+            <span><i className="legend-symbol legend-male" /> 男性</span>
+            <span><i className="legend-symbol legend-female" /> 女性</span>
+            <span>
+              <span className="legend-triangle-svg">
+                <svg
+                  width="28"
+                  height="28"
+                  viewBox="-30 -30 60 60"
+                >
+                  <path
+                    d="M 0 -30 L 26 20 L -26 20 Z"
+                    fill="white"
+                    stroke="#333"
+                    strokeWidth="3"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+              懷孕／不清楚性別
+            </span>
+            <span><i className="legend-symbol legend-disabled" /> 身心疾病</span>
+            <span><i className="legend-symbol legend-dead" /> 已故</span>
+
+            <span><i className="legend-line parent-line" /> 父母子女</span>
+            <span><i className="legend-line married-line" /> 已婚</span>
+            <span><i className="legend-line cohabitation-line" /> 同居</span>
+            <span><i className="legend-line separated-line" /> 分居</span>
+            <span><i className="legend-line divorced-line" /> 離婚</span>
           </div>
         </div>
 
