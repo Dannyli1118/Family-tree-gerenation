@@ -60,49 +60,44 @@ function App() {
     const style = document.createElement('style');
     style.textContent = `
       .graph-link {
-        fill: none;
-        stroke-width: 2.5;
-        opacity: 0.9;
+        fill:none;
+        stroke-width:3;
+        stroke-linecap:round;
+        opacity:0.88;
       }
 
-      .graph-link.parent {
-        stroke: #74c0fc;
+      .graph-link.parent{
+        stroke:#9aa9b7;
       }
 
-      .graph-link.married {
-        stroke: #ff922b;
-        stroke-dasharray: 8 6;
+      .graph-link.married{
+        stroke:#333;
       }
 
-      .person-shape.male {
-        fill: #74c0fc;
-        stroke: #ffffff;
-        stroke-width: 3;
-        filter: url(#nodeShadow);
+      .graph-link.cohabitation{
+        stroke:#333;
+        stroke-dasharray:10 6;
       }
 
-      .person-shape.female {
-        fill: #ffc9c9;
-        stroke: #ffffff;
-        stroke-width: 3;
-        filter: url(#nodeShadow);
+      .graph-link.separated{
+        stroke:#333;
       }
 
-      .person-shape.unknown {
-        fill: #e9ecef;
-        stroke: #ffffff;
-        stroke-width: 3;
-        filter: url(#nodeShadow);
+      .graph-link.divorced{
+        stroke:#333;
       }
 
-      .node-label {
-        fill: #343a40;
-        font-size: 15px;
-        font-weight: 700;
-        font-family: Arial, sans-serif;
-        pointer-events: none;
+      .relationship-marker line{
+        stroke:#333;
+        stroke-width:2;
       }
-    `;
+
+      .node-label{
+        fill:#17202a;
+        font-size:15px;
+        font-weight:900;
+      }
+      `;
 
     clonedSvg.insertBefore(style, clonedSvg.firstChild);
     clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
