@@ -565,3 +565,156 @@
     padding: 18px;
   }
 }
+
+.full-legend {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(150px, 1fr));
+  gap: 14px 22px;
+  align-items: center;
+  padding: 16px 20px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.full-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.legend-symbol {
+  position: relative;
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  box-sizing: border-box;
+  border: 2.5px solid #333;
+  background: white;
+  flex: 0 0 24px;
+}
+
+.legend-male {
+  border-radius: 4px;
+}
+
+.legend-female {
+  border-radius: 50%;
+}
+
+.legend-symbol-svg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+}
+
+.legend-symbol-svg svg {
+  display: block;
+}
+
+.legend-triangle-svg path {
+  vector-effect: non-scaling-stroke;
+}
+
+.legend-disabled {
+  border-radius: 4px;
+  background: linear-gradient(to right, white 50%, #333 50%);
+}
+
+.legend-dead::before,
+.legend-dead::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 10px;
+  width: 18px;
+  height: 2.5px;
+  background: #333;
+  transform-origin: center;
+}
+
+.legend-dead::before {
+  transform: rotate(45deg);
+}
+
+.legend-dead::after {
+  transform: rotate(-45deg);
+}
+
+.legend-line {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex: 0 0 44px;
+  background: transparent;
+}
+
+.parent-line::before,
+.married-line::before,
+.cohabitation-line::before,
+.separated-line::before,
+.divorced-line::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 11px;
+  width: 44px;
+  border-top: 3px solid #333;
+}
+
+.parent-line::before {
+  border-color: #9aa9b7;
+}
+
+.married-line::before {
+  border-color: #333;
+}
+
+.cohabitation-line::before {
+  border-color: #333;
+  border-top-style: dashed;
+}
+
+/* 分居：中間一條斜線 */
+.separated-line::after {
+  content: '';
+  position: absolute;
+  left: 20px;
+  top: 4px;
+  width: 3px;
+  height: 18px;
+  background: #333;
+  transform: rotate(22deg);
+  transform-origin: center;
+}
+
+/* 離婚：中間叉叉，修正對齊 */
+.divorced-line::after,
+.divorced-line::before {
+  content: '';
+}
+
+.divorced-line .dummy {
+  display: none;
+}
+
+.divorced-line::after {
+  content: '×';
+  position: absolute;
+  left: 17px;
+  top: -2px;
+  width: 12px;
+  height: 24px;
+  color: #333;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 24px;
+  text-align: center;
+}
