@@ -490,7 +490,17 @@ function App() {
       .style("white-space", "normal")
       .style("overflow", "hidden");
       
-    const width = 980; const height = 580;
+    const width = 1200;
+
+    // 每一代之間的垂直距離
+    const generationGap = 170;
+
+    // 上下留白
+    const topPadding = 120;
+    const bottomPadding = 120;
+
+    // 先給一個暫時高度，後面算完 totalGens 後會重新設定
+    let height = 700;
     svg.attr('width', '100%').attr('height', height).attr('viewBox', [0, 0, width, height]);
 
     // 嚴格保留你原本的 Object.create 避免破壞原型鏈
@@ -547,6 +557,12 @@ function App() {
     const minGen = validGens.length > 0 ? Math.min(...validGens) : 0;
     const maxGen = validGens.length > 0 ? Math.max(...validGens) : 0;
     const totalGens = maxGen - minGen + 1; 
+    height = Math.max(700, topPadding + bottomPadding + (totalGens - 1) * generationGap);
+
+    svg
+      .attr('width', '100%')
+      .attr('height', height)
+      .attr('viewBox', [0, 0, width, height]);
 
     const validYears = nodes.map(d => {
         const y = parseInt(d.birthYear || (d.birthday ? String(d.birthday).substring(0, 4) : 0));
@@ -565,13 +581,13 @@ function App() {
                 d.fy = height / 2;
             } else {
                 const ratio = (gen - minGen) / (totalGens - 1);
-                d.fy = 90 + ratio * (height - 180); 
+                d.fy = topPadding + ratio * ((totalGens - 1) * generationGap);
             }
         } else {
             const year = parseInt(d.birthYear || (d.birthday ? String(d.birthday).substring(0, 4) : 0));
             if (!isNaN(year) && year > 0 && maxYear > minYear) {
                 const ratio = (year - minYear) / (maxYear - minYear);
-                d.fy = 90 + ratio * (height - 180); 
+                d.fy = topPadding + ratio * (height - topPadding - bottomPadding);
             } else {
                 d.fy = height / 2; 
             }
